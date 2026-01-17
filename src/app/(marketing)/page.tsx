@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { listings } from "@/lib/mock/listings";
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
 
 export const metadata = {
   title: "Home",
@@ -63,7 +65,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-4 grid gap-3">
-              {featured.map((l) => (
+              {featured.map((l: { id: Key | null | undefined; title: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; shortPitch: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; techStack: any[]; isAuction: any; currentBid: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; price: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; bidCount: any; }) => (
                 <Link
                   key={l.id}
                   href={`/listing/${l.id}`}
@@ -74,8 +76,8 @@ export default function HomePage() {
                       <p className="font-semibold">{l.title}</p>
                       <p className="mt-1 text-sm sb-muted">{l.shortPitch}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {l.techStack.slice(0, 3).map((t) => (
-                          <span key={t} className="sb-chip">
+                        {l.techStack.slice(0, 3).map((t: any, index: number) => (
+                          <span key={index} className="sb-chip">
                             {t}
                           </span>
                         ))}

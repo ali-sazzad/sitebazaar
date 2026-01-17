@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <SiteHeader />
-        <main className="min-h-[calc(100vh-200px)]">{children}</main>
+        <main id="main" className="min-h-[calc(100vh-200px)]">{children}</main>
         <SiteFooter />
         <Toaster richColors />
       </body>
