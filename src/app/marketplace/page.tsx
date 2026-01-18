@@ -61,14 +61,20 @@ export default function MarketplacePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Badge style={{ background: "hsla(var(--sb-grad-a) / .12)", color: "hsl(var(--sb-text))" }}>
-            {loading ? "Loading…" : `${result.total} results`}
-          </Badge>
-          <Button variant="outline" className="rounded-full" onClick={onReset}>
-            Reset
-          </Button>
-        </div>
+        <div className="flex items-center gap-2 md:hidden">
+  <Badge
+    style={{
+      background: "hsla(var(--sb-grad-a) / .12)",
+      color: "hsl(var(--sb-text))",
+    }}
+  >
+    {loading ? "Loading…" : `${result.total} results`}
+  </Badge>
+  <Button variant="outline" className="rounded-full" onClick={onReset}>
+    Reset
+  </Button>
+</div>
+
       </div>
 
       <Separator className="my-6" />
@@ -79,13 +85,37 @@ export default function MarketplacePage() {
       */}
       <div className="grid gap-6 md:grid-cols-[280px_1fr]">
         {/* Filters */}
-        <aside className="rounded-2xl border sb-border bg-white/60 p-4">
-          <p className="text-sm font-semibold text-slate-900">Filters</p>
-          <p className="mt-1 text-sm text-slate-600">
-            These persist automatically.
-          </p>
+        <aside className="md:sticky md:top-24 h-fit rounded-2xl border sb-border bg-white/70 p-4">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <p className="text-sm font-semibold text-slate-900">Filters</p>
+      <p className="mt-1 text-sm text-slate-600">
+        These persist automatically.
+      </p>
+    </div>
 
-          <div className="mt-4 space-y-4">
+    {/* Desktop-only: results + reset inside filter card */}
+    <div className="hidden md:flex flex-col items-end gap-2">
+      <Badge
+        style={{
+          background: "hsla(var(--sb-grad-a) / .12)",
+          color: "hsl(var(--sb-text))",
+        }}
+      >
+        {loading ? "Loading…" : `${result.total} results`}
+      </Badge>
+
+      <Button
+        variant="outline"
+        className="h-8 rounded-full px-3 text-xs hover:bg-green-100"
+        onClick={onReset}
+      >
+        Reset
+      </Button>
+    </div>
+  </div>
+
+  <div className="mt-4 space-y-4">
             <div>
               <label className="text-xs font-semibold text-slate-600">Search</label>
               <Input
