@@ -24,3 +24,14 @@ It includes simulated auctions/bidding, search/filter/sort, favorites, recently 
 npm install
 npm run dev
 ```
+
+## Hiring Manager Checklist ✅
+- App Router with multiple routes and shared layout
+- Reusable component system (buttons/cards/badges/dialog/toast/skeleton)
+- Search + filter + sort pipeline (real UI complexity)
+- Form validation + conditional fields (auction toggle)
+- Local persistence (favorites, bids, drafts, recents)
+- A11y: focus states, semantic headings, skip link
+- UX polish: skeletons, empty states, success/error states
+- Clean code structure (lib/ separation, UI components)
+- Production-ready deploy (Vercel)
