@@ -6,17 +6,38 @@ import { Toaster } from "@/components/ui/sonner";
 import { BackToTop } from "@/components/layout/back-to-top";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sitebazaar.vercel.app"),
   title: {
     default: "SiteBazaar — Buy & Sell Websites",
     template: "%s — SiteBazaar",
   },
   description:
-    "A colorful marketplace UI for buying & selling websites with simulated bidding, favorites, and dashboards.",
+    "A colorful frontend-only marketplace for buying & selling websites with a simulated bidding flow. Built with Next.js, TypeScript, Tailwind, and shadcn/ui.",
+  applicationName: "SiteBazaar",
   openGraph: {
-    title: "SiteBazaar",
-    description:
-      "Marketplace for buying & selling websites (Buy Now + Auctions). Frontend-only demo with persistence.",
     type: "website",
+    siteName: "SiteBazaar",
+    title: "SiteBazaar — Buy & Sell Websites",
+    description:
+      "Marketplace UI with search/filter/sort, listing detail, auctions, dashboard persistence. Frontend-only demo.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "SiteBazaar",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SiteBazaar — Buy & Sell Websites",
+    description:
+      "Frontend-only marketplace with bidding UI. Next.js + Tailwind + shadcn/ui.",
+    images: ["/og.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
 };
 

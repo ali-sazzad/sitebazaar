@@ -8,7 +8,9 @@ import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from
 
 export const metadata = {
   title: "Home",
+  description: "Browse featured listings and auctions on SiteBazaar.",
 };
+
 
 export default function HomePage() {
   const featured = listings.slice(0, 6);
