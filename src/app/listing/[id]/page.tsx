@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+import { useFavorites } from "@/lib/favorites/use-favorites";
+import { toast } from "sonner";
+import { Heart } from "lucide-react";
+
 function money(n: number) {
   return new Intl.NumberFormat("en-US").format(n);
 }
@@ -22,6 +26,10 @@ export default function ListingDetailPage() {
   const listing = useMemo(() => (id ? getListingById(id) : null), [id]);
 
   const [activeShot, setActiveShot] = useState(0);
+  
+  const fav = useFavorites();
+const saved = listing ? fav.isFav(listing.id) : false;
+
 
   // persist recently viewed
   useEffect(() => {
@@ -184,9 +192,22 @@ export default function ListingDetailPage() {
                 </Button>
               )}
 
-              <Button variant="outline" className="rounded-xl">
-                Save to Favorites (next step)
-              </Button>
+              <Button
+  variant="outline"
+  className="rounded-xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+  onClick={() => {
+    if (!listing) return;
+    const didSave = fav.toggle(listing.id);
+    toast(didSave ? "Saved to favorites" : "Removed from favorites");
+  }}
+>
+  <Heart
+    className="mr-2 h-4 w-4"
+    fill={saved ? "currentColor" : "none"}
+  />
+  {saved ? "Saved" : "Save to Favorites"}
+</Button>
+
             </div>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">

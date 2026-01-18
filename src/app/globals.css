@@ -71,3 +71,23 @@ body {
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
   }
 }
+/* --- Sonner toast styling (more visible) --- */
+[data-sonner-toaster] {
+  --toast-bg: #ffffff;              /* dark, high contrast */
+  --toast-text: #0b1020;
+  --toast-border: rgba(255,255,255,.14);
+}
+
+[data-sonner-toast] {
+  background: var(--toast-bg) !important;
+  color: var(--toast-text) !important;
+  border: 1px solid var(--toast-border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.35) !important;
+}
+
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description] {
+  color: var(--toast-text) !important;
+  opacity: 0.95;
+}
