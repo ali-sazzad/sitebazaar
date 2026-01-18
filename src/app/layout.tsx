@@ -3,6 +3,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { BackToTop } from "@/components/layout/back-to-top";
 
 export const metadata: Metadata = {
   title: {
@@ -22,10 +23,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen">
+        {/* Header must NOT be inside any overflow container */}
         <SiteHeader />
-        <main id="main" className="min-h-[calc(100vh-200px)]">{children}</main>
+
+        <main id="main" className="min-h-[calc(100vh-200px)]">
+          {children}
+        </main>
+
         <SiteFooter />
+
+        {/* Back to top button */}
+        <BackToTop />
+
         <Toaster richColors />
       </body>
     </html>
