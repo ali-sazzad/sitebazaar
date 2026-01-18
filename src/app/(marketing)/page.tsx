@@ -96,9 +96,9 @@ export default function HomePage() {
                           Auction
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
-                          Buy Now
-                        </span>
+                        <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white whitespace-nowrap">
+  Buy Now
+</span>
                       )}
                       <p className="mt-2 text-sm font-semibold">
                         ${l.isAuction ? l.currentBid : l.price}
