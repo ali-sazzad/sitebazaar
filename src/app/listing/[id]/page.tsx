@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import { getListingById } from "@/lib/mock/get-listing";
 import { pushRecent } from "@/lib/recent/recent";
 
+import { BuyNowModal } from "@/components/checkout/buy-now-modal";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +28,9 @@ export default function ListingDetailPage() {
   const listing = useMemo(() => (id ? getListingById(id) : null), [id]);
 
   const [activeShot, setActiveShot] = useState(0);
-  
-  const fav = useFavorites();
-const saved = listing ? fav.isFav(listing.id) : false;
 
+  const fav = useFavorites();
+  const saved = listing ? fav.isFav(listing.id) : false;
 
   // persist recently viewed
   useEffect(() => {
@@ -120,7 +121,9 @@ const saved = listing ? fav.isFav(listing.id) : false;
                 className={[
                   "h-20 rounded-2xl border transition",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                  i === activeShot ? "border-transparent" : "border-slate-200 hover:bg-slate-50",
+                  i === activeShot
+                    ? "border-transparent"
+                    : "border-slate-200 hover:bg-slate-50",
                 ].join(" ")}
                 style={
                   i === activeShot
@@ -171,7 +174,7 @@ const saved = listing ? fav.isFav(listing.id) : false;
               {listing.isAuction ? (
                 <Button
                   asChild
-                  className="rounded-xl text-white"
+                  className="h-11 rounded-full text-white font-semibold"
                   style={{
                     background:
                       "linear-gradient(135deg, hsl(var(--sb-warm)), hsl(var(--sb-grad-a)))",
@@ -180,34 +183,28 @@ const saved = listing ? fav.isFav(listing.id) : false;
                   <Link href={`/auctions/${listing.id}`}>Go to Auction</Link>
                 </Button>
               ) : (
-                <Button
-                  className="rounded-xl text-white"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-                  }}
-                  onClick={() => alert("Mock checkout: no backend")}
-                >
-                  Buy Now
-                </Button>
+                // ✅ FIX: Use BuyNowModal instead of alert button
+                <BuyNowModal
+                  listingId={listing.id}
+                  title={listing.title}
+                  price={listing.price}
+                />
               )}
 
               <Button
-  variant="outline"
-  className="rounded-xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-  onClick={() => {
-    if (!listing) return;
-    const didSave = fav.toggle(listing.id);
-    toast(didSave ? "Saved to favorites" : "Removed from favorites");
-  }}
->
-  <Heart
-    className="mr-2 h-4 w-4"
-    fill={saved ? "currentColor" : "none"}
-  />
-  {saved ? "Saved" : "Save to Favorites"}
-</Button>
-
+                variant="outline"
+                className="h-11 rounded-full cursor-pointer border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                onClick={() => {
+                  const didSave = fav.toggle(listing.id);
+                  toast(didSave ? "Saved to favorites" : "Removed from favorites");
+                }}
+              >
+                <Heart
+                  className="mr-2 h-4 w-4"
+                  fill={saved ? "currentColor" : "none"}
+                />
+                {saved ? "Saved" : "Save to Favorites"}
+              </Button>
             </div>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -256,7 +253,10 @@ const saved = listing ? fav.isFav(listing.id) : false;
       </div>
 
       <div className="mt-10">
-        <Link className="text-sm text-slate-600 hover:text-slate-900" href="/marketplace">
+        <Link
+          className="text-sm text-slate-600 hover:text-slate-900"
+          href="/marketplace"
+        >
           ← Back to Marketplace
         </Link>
       </div>
