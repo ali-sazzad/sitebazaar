@@ -91,3 +91,35 @@ body {
   color: var(--toast-text) !important;
   opacity: 0.95;
 }
+/* Make native date/time picker icons visible (mobile + desktop) */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Safari/Chrome picker indicator */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  display: block;
+  filter: none;
+  cursor: pointer;
+}
+
+/* If your inputs use dark text, this helps on some themes */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background-color: transparent;
+}
+/* Make native date/time picker indicators visible where supported */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  display: block;
+  cursor: pointer;
+}

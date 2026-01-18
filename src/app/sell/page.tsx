@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,10 +27,17 @@ const techs = ["Next.js", "React", "Vue", "HTML"] as const;
 type FormState = {
   title: string;
   category: (typeof categories)[number] | "";
-  techStack: string[]; // store as strings in form
+  techStack: string[];
   price: string;
   isAuction: boolean;
-  endsAt: string; // datetime-local string
+
+  // Canonical field (desktop picker)
+  endsAtLocal: string; // YYYY-MM-DDTHH:mm
+
+  // Mobile-friendly fields (always show pickers)
+  endsDate: string; // YYYY-MM-DD
+  endsTime: string; // HH:mm
+
   shortPitch: string;
   tags: string; // comma separated
   screenshots: string; // comma separated URLs
@@ -38,18 +47,53 @@ export default function SellPage() {
   const [form, setForm] = useState<FormState>({
     title: "",
     category: "",
-    techStack: ["Next.js", "React"], // default
+    techStack: ["Next.js", "React"],
     price: "199",
     isAuction: false,
-    endsAt: "",
+
+    endsAtLocal: "",
+    endsDate: "",
+    endsTime: "",
+
     shortPitch: "",
     tags: "clean, responsive, modern",
     screenshots: "",
   });
 
-  const errors = useMemo(() => validate(form), [form]);
+  // Keep mobile fields synced when desktop datetime changes
+  useEffect(() => {
+    if (!form.endsAtLocal) return;
+    const [d, t] = form.endsAtLocal.split("T");
+    setForm((p) => ({
+      ...p,
+      endsDate: d || p.endsDate,
+      endsTime: (t || "").slice(0, 5) || p.endsTime,
+    }));
+     
+  }, [form.endsAtLocal]);
 
+  const errors = useMemo(() => validate(form), [form]);
   const canSubmit = Object.keys(errors).length === 0;
+
+  const setEndsDate = (endsDate: string) => {
+    setForm((p) => {
+      const next = { ...p, endsDate };
+      if (next.endsDate && next.endsTime) {
+        next.endsAtLocal = `${next.endsDate}T${next.endsTime}`;
+      }
+      return next;
+    });
+  };
+
+  const setEndsTime = (endsTime: string) => {
+    setForm((p) => {
+      const next = { ...p, endsTime };
+      if (next.endsDate && next.endsTime) {
+        next.endsAtLocal = `${next.endsDate}T${next.endsTime}`;
+      }
+      return next;
+    });
+  };
 
   const submit = () => {
     if (!canSubmit) {
@@ -69,29 +113,34 @@ export default function SellPage() {
       .filter(Boolean)
       .slice(0, 6);
 
-    const draft = addUserListing({
+    const endsAtIso =
+      form.isAuction && form.endsAtLocal
+        ? new Date(form.endsAtLocal).toISOString()
+        : undefined;
+
+    addUserListing({
       title: form.title.trim(),
       category: form.category as any,
       techStack: form.techStack as any,
       price: Number(form.price),
       isAuction: form.isAuction,
-      endsAt: form.isAuction ? new Date(form.endsAt).toISOString() : undefined,
+      endsAt: endsAtIso,
       shortPitch: form.shortPitch.trim(),
       tags,
       screenshots,
     });
 
     toast.success("Listing draft saved (local)");
-    // light reset (keep some defaults)
+
     setForm((p) => ({
       ...p,
       title: "",
       shortPitch: "",
       screenshots: "",
-      endsAt: "",
+      endsAtLocal: "",
+      endsDate: "",
+      endsTime: "",
     }));
-
-    console.log("Saved draft:", draft);
   };
 
   return (
@@ -119,12 +168,13 @@ export default function SellPage() {
       <Separator className="my-6" />
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        {/* Form */}
+        {/* FORM */}
         <Card className="sb-card p-6">
           <div className="grid gap-5">
             {/* Title */}
             <Field label="Title" error={errors.title}>
               <Input
+                className="h-11 bg-white"
                 value={form.title}
                 onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                 placeholder="e.g. Premium SaaS landing page (Next.js + Tailwind)"
@@ -138,7 +188,7 @@ export default function SellPage() {
                   value={form.category}
                   onValueChange={(v) => setForm((p) => ({ ...p, category: v as any }))}
                 >
-                  <SelectTrigger className="bg-white/90 border-slate-200 hover:bg-white">
+                  <SelectTrigger className="h-11 bg-white/90 border-slate-200 hover:bg-white">
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 shadow-xl">
@@ -151,8 +201,9 @@ export default function SellPage() {
                 </Select>
               </Field>
 
-              <Field label="Price (AUD)" error={errors.price}>
+              <Field label="Price (USD)" error={errors.price}>
                 <Input
+                  className="h-11 bg-white"
                   type="number"
                   inputMode="numeric"
                   value={form.price}
@@ -165,9 +216,7 @@ export default function SellPage() {
             {/* Tech stack chips */}
             <div>
               <p className="text-sm font-semibold text-slate-900">Tech stack</p>
-              <p className="mt-1 text-sm text-slate-600">
-                Pick at least 1.
-              </p>
+              <p className="mt-1 text-sm text-slate-600">Pick at least 1.</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {techs.map((t) => {
@@ -218,13 +267,14 @@ export default function SellPage() {
                 value={form.shortPitch}
                 onChange={(e) => setForm((p) => ({ ...p, shortPitch: e.target.value }))}
                 placeholder="2–3 lines describing what makes this website valuable…"
-                className="min-h-27.5"
+                className="min-h-27.5 bg-white"
               />
             </Field>
 
             {/* Tags */}
             <Field label="Tags (comma separated)" error={errors.tags}>
               <Input
+                className="h-11 bg-white"
                 value={form.tags}
                 onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))}
                 placeholder="clean, responsive, seo, fast"
@@ -234,6 +284,7 @@ export default function SellPage() {
             {/* Screenshots */}
             <Field label="Screenshot URLs (comma separated) — mock" error={errors.screenshots}>
               <Input
+                className="h-11 bg-white"
                 value={form.screenshots}
                 onChange={(e) => setForm((p) => ({ ...p, screenshots: e.target.value }))}
                 placeholder="https://…/1.png, https://…/2.png"
@@ -266,23 +317,80 @@ export default function SellPage() {
                 </button>
               </div>
 
+              {/* Auction end time */}
               {form.isAuction && (
                 <div className="mt-4">
-                  <Field label="Auction end date/time" error={errors.endsAt}>
+                  <p className="text-sm font-semibold text-slate-900">Auction end</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    On mobile we show Date + Time with visible icons.
+                  </p>
+
+                  {/* MOBILE: date + time with visible icon overlays */}
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+                    <div className="relative">
+                      <Input
+                        className="h-11 bg-white pr-10"
+                        type="date"
+                        value={form.endsDate}
+                        onChange={(e) => setEndsDate(e.target.value)}
+                      />
+                      <span className="pointer-events-none absolute inset-y-0 right-3 grid place-items-center text-slate-500">
+                        📅
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        className="h-11 bg-white pr-10"
+                        type="time"
+                        value={form.endsTime}
+                        onChange={(e) => setEndsTime(e.target.value)}
+                      />
+                      <span className="pointer-events-none absolute inset-y-0 right-3 grid place-items-center text-slate-500">
+                        ⏰
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* DESKTOP: datetime-local */}
+                  <div className="mt-3 hidden sm:block relative">
                     <Input
+                      className="h-11 bg-white pr-10"
                       type="datetime-local"
-                      value={form.endsAt}
-                      onChange={(e) => setForm((p) => ({ ...p, endsAt: e.target.value }))}
+                      value={form.endsAtLocal}
+                      onChange={(e) => setForm((p) => ({ ...p, endsAtLocal: e.target.value }))}
                     />
-                  </Field>
+                    <span className="pointer-events-none absolute inset-y-0 right-3 grid place-items-center text-slate-500">
+                      📅
+                    </span>
+                  </div>
+
+                  {errors.endsAt ? (
+                    <p className="mt-2 text-sm text-red-600">{errors.endsAt}</p>
+                  ) : null}
                 </div>
               )}
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" className="rounded-xl" onClick={() => setForm((p) => ({ ...p, title: "", shortPitch: "", endsAt: "", screenshots: "" }))}>
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() =>
+                  setForm((p) => ({
+                    ...p,
+                    title: "",
+                    shortPitch: "",
+                    screenshots: "",
+                    endsAtLocal: "",
+                    endsDate: "",
+                    endsTime: "",
+                  }))
+                }
+              >
                 Clear
               </Button>
+
               <Button
                 className="rounded-xl text-white h-11 font-semibold"
                 style={{
@@ -298,7 +406,7 @@ export default function SellPage() {
           </div>
         </Card>
 
-        {/* Preview card */}
+        {/* PREVIEW */}
         <Card className="sb-card p-6">
           <p className="text-sm font-semibold text-slate-900">Preview</p>
           <p className="mt-1 text-sm text-slate-600">
@@ -330,7 +438,7 @@ export default function SellPage() {
                 </p>
               </div>
               <span
-                className="rounded-full px-2.5 py-1 text-xs font-semibold text-white"
+                className="rounded-full px-2.5 py-1 text-xs font-semibold text-white whitespace-nowrap"
                 style={{
                   background: form.isAuction
                     ? "linear-gradient(135deg, hsl(var(--sb-warm)), hsl(var(--sb-grad-a)))"
@@ -340,6 +448,12 @@ export default function SellPage() {
                 {form.isAuction ? "Auction" : "Buy Now"}
               </span>
             </div>
+
+            {form.isAuction && (
+              <p className="mt-3 text-xs text-slate-500">
+                Ends: {form.endsAtLocal ? form.endsAtLocal.replace("T", " ") : "—"}
+              </p>
+            )}
           </div>
 
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -381,10 +495,15 @@ function validate(f: FormState) {
 
   if (f.title.trim().length < 6) e.title = "Title must be at least 6 characters.";
   if (!f.category) e.category = "Pick a category.";
+
   const priceNum = Number(f.price);
   if (!Number.isFinite(priceNum) || priceNum <= 0) e.price = "Enter a valid price.";
-  if (!f.techStack || f.techStack.length === 0) e.techStack = "Pick at least 1 tech stack item.";
-  if (f.shortPitch.trim().length < 10) e.shortPitch = "Short pitch must be at least 10 characters.";
+
+  if (!f.techStack || f.techStack.length === 0)
+    e.techStack = "Pick at least 1 tech stack item.";
+
+  if (f.shortPitch.trim().length < 10)
+    e.shortPitch = "Short pitch must be at least 10 characters.";
 
   const tags = f.tags.split(",").map((t) => t.trim()).filter(Boolean);
   if (tags.length === 0) e.tags = "Add at least 1 tag.";
@@ -396,9 +515,9 @@ function validate(f: FormState) {
   }
 
   if (f.isAuction) {
-    if (!f.endsAt) e.endsAt = "Choose an auction end date/time.";
+    if (!f.endsAtLocal) e.endsAt = "Choose an auction end date/time.";
     else {
-      const end = new Date(f.endsAt).getTime();
+      const end = new Date(f.endsAtLocal).getTime();
       if (!Number.isFinite(end) || end < Date.now() + 1000 * 60 * 10) {
         e.endsAt = "End time must be at least 10 minutes from now.";
       }
