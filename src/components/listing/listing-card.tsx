@@ -1,71 +1,56 @@
 import Link from "next/link";
-import { Listing } from "@/lib/mock/listings";
-import { Card } from "@/components/ui/card";
+import type { Listing } from "@/lib/mock/listings";
+import { SitePreview } from "@/components/listing/site-preview";
+import { effectivePrice, lotNumber, money } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-function money(n: number) {
-  return new Intl.NumberFormat("en-US").format(n);
-}
-
-export function ListingCard({ listing }: { listing: Listing }) {
-  const price = listing.isAuction ? listing.currentBid : listing.price;
+export function ListingCard({ listing, className }: { listing: Listing; className?: string }) {
+  const lot = lotNumber(listing.id);
 
   return (
     <Link
       href={`/listing/${listing.id}`}
-      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-2xl"
+      data-flip-id={listing.id}
+      className={cn(
+        "group flex flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-ink/40",
+        className
+      )}
     >
-      <Card className="sb-card overflow-hidden transition hover:-translate-y-0.5">
-        {/* mock image */}
-        <div
-          className="h-36 w-full"
-          style={{
-            background:
-              "linear-gradient(135deg, hsla(var(--sb-grad-a)/.18), hsla(var(--sb-grad-b)/.14))",
-          }}
+      <div className="relative border-b">
+        <SitePreview
+          id={listing.id}
+          category={listing.category}
+          className="transition-transform duration-500 group-hover:scale-[1.03]"
         />
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold text-slate-900">{listing.title}</p>
-              <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-                {listing.shortPitch}
-              </p>
-            </div>
+        {listing.isAuction ? (
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold text-ink">
+            <span className="size-1.5 rounded-full bg-ink" aria-hidden="true" />
+            Live auction
+          </span>
+        ) : null}
+      </div>
 
-            <span
-              className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
-              style={{
-                background: listing.isAuction
-                  ? "linear-gradient(135deg, hsl(var(--sb-warm)), hsl(var(--sb-grad-a)))"
-                  : "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-              }}
-            >
-              {listing.isAuction ? "Auction" : "Buy Now"}
-            </span>
-          </div>
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-baseline justify-between gap-3 text-xs text-muted-ink">
+          <span>{lot ? `Lot ${lot}` : listing.category}</span>
+          <span>{listing.category}</span>
+        </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {listing.techStack.slice(0, 3).map((t) => (
-              <span key={t} className="sb-chip">
-                {t}
-              </span>
-            ))}
-            <span className="sb-chip">{listing.category}</span>
-          </div>
+        <h3 className="mt-2 text-lg font-semibold leading-snug">{listing.title}</h3>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-ink">{listing.shortPitch}</p>
 
-          <div className="mt-4 flex items-end justify-between">
-            <div>
-              <p className="text-xs text-slate-500">Price</p>
-              <p className="text-lg font-semibold text-slate-900">
-                ${money(price)}
-              </p>
-            </div>
-            <p className="text-xs text-slate-500">
-              {listing.isAuction ? `${listing.bidCount} bids` : "Instant"}
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+          <div>
+            <p className="text-xs text-muted-ink">
+              {listing.isAuction ? `Current bid, ${listing.bidCount} bids` : "Buy now"}
+            </p>
+            <p className="tabular font-display text-2xl font-semibold">
+              ${money(effectivePrice(listing))}
             </p>
           </div>
+          <p className="text-right text-xs text-muted-ink">{listing.techStack.slice(0, 2).join(", ")}</p>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }
