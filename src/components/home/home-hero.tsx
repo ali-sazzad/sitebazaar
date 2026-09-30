@@ -131,9 +131,11 @@ export function HomeHero() {
       </div>
 
       {/* Lot board */}
-      <div className="relative mt-5 flex min-h-0 flex-1 flex-col pt-8 [@media(max-height:600px)]:mt-2 [@media(max-height:600px)]:pt-6 lg:mt-0 lg:block lg:flex-none lg:pr-14 lg:pt-12">
-        {/* Phones: height-driven (fills the space left), width follows the aspect ratio. */}
-        <div className="relative aspect-[4/3.6] h-full max-h-[24rem] max-w-[calc(100%-2.5rem)] self-start lg:h-auto lg:max-h-none lg:w-full lg:max-w-none">
+      <div className="relative mt-5 flex min-h-0 flex-1 flex-col justify-center pt-8 [@media(max-height:600px)]:mt-2 [@media(max-height:600px)]:pt-6 lg:mt-0 lg:block lg:flex-none lg:pr-14 lg:pt-12">
+        {/* Phones: height-driven (fills the space left), width follows the aspect ratio. The height
+            is also capped by the available width (viewport minus gutters and the 2.5rem fan room)
+            so tall screens never stretch the cards out of proportion. */}
+        <div className="relative aspect-[4/3.6] h-full max-h-[min(24rem,calc((100vw-72px)*0.9))] max-w-[calc(100%-2.5rem)] self-start sm:max-h-[min(24rem,calc((100vw-88px)*0.9))] lg:h-auto lg:max-h-none lg:w-full lg:max-w-none">
           {LOTS.map((l, i) => (
             <Link
               key={l.id}
