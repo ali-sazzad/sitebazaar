@@ -4,7 +4,14 @@ A marketplace for buying and selling websites, designed like an auction house. B
 live auctions, or buy a finished site outright. Frontend only: listings, bids, purchases and your
 watchlist are stored in the browser's localStorage and no payment is taken.
 
-**Live demo: https://ali-sazzad.github.io/sitebazaar/**
+- **Live site:** https://sitebazaar.vercel.app
+- **Mirror on GitHub Pages:** https://ali-sazzad.github.io/sitebazaar/
+
+![SiteBazaar home page: "Websites, sold by the lot." next to a stack of live auction lots](.github/screenshots/home-light.png)
+
+| Dark mode | On a phone |
+| --- | --- |
+| ![Browse lots page in dark mode with filters and listing cards](.github/screenshots/marketplace-dark.png) | <img src=".github/screenshots/home-mobile.png" alt="Home page on a phone, with the full hero visible" width="260"> |
 
 ## Tech stack
 
@@ -48,8 +55,9 @@ get the final state straight away.
   bid history
 - Sell: validated listing form with live preview and optional auction closing time
 - Dashboard: your bids, watchlist, purchases, listings and recently viewed lots
-- Per-lot page titles and descriptions, Open Graph defaults, skip link, visible focus, labelled
-  controls
+- Loading skeletons wherever content waits on browser data
+- Per-lot page titles and descriptions, favicon and home-screen icon, share preview image, skip
+  link, visible focus, labelled controls
 
 ## Getting started
 
@@ -62,10 +70,14 @@ Then open http://localhost:3000.
 
 ## Deployment
 
-Every push to `main` builds a static export and publishes it to GitHub Pages through
-`.github/workflows/deploy-pages.yml`. The export only switches on when `PAGES_BASE_PATH` is set,
-so local development and other hosts such as Vercel build the app normally. To reproduce the Pages
-build locally:
+Every push to `main` deploys to two places:
+
+- **Vercel** (https://sitebazaar.vercel.app) builds the app as a normal Next.js project.
+- **GitHub Pages** (https://ali-sazzad.github.io/sitebazaar/) gets a static export, built by
+  `.github/workflows/deploy-pages.yml`. The export only switches on when `PAGES_BASE_PATH` is set,
+  so local development and Vercel are unaffected.
+
+To reproduce the Pages build locally:
 
 ```bash
 PAGES_BASE_PATH=/sitebazaar npm run build   # writes the static site to ./out
@@ -80,7 +92,7 @@ src/
     home/              hero lot board, closing soon, category index, sale process
     listing/           listing card, generated site preview, watchlist button
     motion/            CountUp and the no-JS reveal flag
-    layout/            header, footer, back to top
+    layout/            header, footer, back to top, theme provider and toggle
     ui/                shadcn/ui primitives
   lib/
     motion/gsap.ts     registers GSAP plugins in one place
