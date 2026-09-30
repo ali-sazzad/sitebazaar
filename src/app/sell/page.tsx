@@ -103,7 +103,7 @@ export default function SellPage() {
 
   return (
     <div className="sb-container py-12">
-      <h1 className="display-tight text-6xl font-bold sm:text-7xl">List your site</h1>
+      <h1 className="display-tight text-5xl font-bold sm:text-6xl">List your site</h1>
       <p className="mt-3 max-w-lg text-muted-ink">
         Tell buyers what they&apos;re getting. You can sell at a fixed price or open an auction.
       </p>

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ListingCard } from "@/components/listing/listing-card";
 import { ListingSkeleton } from "@/components/listing/listing-skeleton";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -97,9 +98,9 @@ function Marketplace() {
     <div className="sb-container py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="display-tight text-6xl font-bold sm:text-7xl">Browse lots</h1>
+          <h1 className="display-tight text-5xl font-bold sm:text-6xl">Browse lots</h1>
           <p className="mt-3 text-muted-ink" aria-live="polite">
-            {ready ? `${result.total} of ${listings.length} lots match` : "Loading lots"}
+            {ready ? `${result.total} of ${listings.length} lots match` : <Skeleton className="h-5 w-36" />}
           </p>
         </div>
         <div className="relative w-full sm:w-80">

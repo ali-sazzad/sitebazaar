@@ -5,6 +5,7 @@ import { listings } from "@/lib/mock/listings";
 import { lotNumber, money, shortTitle, timeLeft } from "@/lib/format";
 import { useNow } from "@/lib/use-now";
 import { SitePreview } from "@/components/listing/site-preview";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AUCTIONS = [...listings]
   .filter((l) => l.isAuction)
@@ -53,7 +54,7 @@ export function ClosingSoon() {
                       urgent ? "text-destructive" : "text-ink"
                     }`}
                   >
-                    {left === null ? " " : timeLeft(left)}
+                    {left === null ? <Skeleton className="ml-auto h-4 w-20" /> : timeLeft(left)}
                   </p>
                 </Link>
               </li>

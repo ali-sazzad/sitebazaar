@@ -24,7 +24,7 @@ export function CategoryIndex() {
                 href={`/marketplace?category=${encodeURIComponent(name)}`}
                 className="group grid gap-1 py-6 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-8"
               >
-                <span className="display-tight text-5xl font-bold transition-colors group-hover:text-cobalt sm:text-7xl">
+                <span className="display-tight text-4xl font-bold transition-colors group-hover:text-cobalt sm:text-6xl">
                   {name}
                 </span>
                 <span className="text-sm text-muted-ink sm:text-right">

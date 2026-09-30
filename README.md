@@ -9,7 +9,7 @@ watchlist are stored in the browser's localStorage and no payment is taken.
 ## Tech stack
 
 - Next.js 16 (App Router, React Compiler) with React 19 and TypeScript
-- Tailwind CSS 4 with shadcn/ui (Radix primitives)
+- Tailwind CSS 4 with shadcn/ui (Radix primitives); Schibsted Grotesk and Public Sans via next/font
 - GSAP 3 with `@gsap/react` (SplitText, ScrollTrigger, Flip, ScrollToPlugin)
 - Sonner for toasts
 
@@ -26,7 +26,8 @@ Motion is used either for one orchestrated moment or in response to what the vis
 | Auction room | New bids slide into the history | `gsap.from` on the new row |
 | Checkout | A "Sold" stamp comes down on purchase | `fromTo` with `back.out` |
 | Watchlist | The heart pops when you save a lot | Elastic ease |
-| Header | Hides on scroll down, returns on scroll up; the active-page underline slides between links | ScrollTrigger, tweened position |
+| Header | On desktop it hides on scroll down and returns on scroll up (on phones it stays pinned); the active-page underline slides between links | ScrollTrigger, matchMedia |
+| Back to top | A ring around the button fills with reading progress; tapping it scrolls smoothly to the top | ScrollTrigger (scrubbed), ScrollToPlugin |
 
 Everything checks `prefers-reduced-motion`. Reduced-motion visitors, and anyone without JavaScript,
 get the final state straight away.

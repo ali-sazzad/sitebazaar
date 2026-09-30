@@ -21,7 +21,7 @@ export default function HomePage() {
       <section className="sb-container pt-20">
         <div className="grid gap-8 rounded-3xl bg-cobalt p-8 text-white sm:p-12 md:grid-cols-[1fr_auto] md:items-end">
           <div>
-            <h2 className="display-tight text-5xl font-bold sm:text-6xl">Built something you&apos;re done with?</h2>
+            <h2 className="display-tight text-4xl font-bold sm:text-5xl">Built something you&apos;re done with?</h2>
             <p className="mt-4 max-w-lg text-white/80">
               List it in a few minutes. Set a price, or open an auction and let buyers decide what it&apos;s worth.
             </p>

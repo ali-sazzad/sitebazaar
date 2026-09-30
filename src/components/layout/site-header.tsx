@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from "@/lib/motion/gsap";
+import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion, FULL_MOTION } from "@/lib/motion/gsap";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -35,22 +35,34 @@ export function SiteHeader() {
   const marker = useRef<HTMLSpanElement>(null);
   const hideTween = useRef<gsap.core.Tween | null>(null);
 
-  // Tuck the header away while scrolling down, bring it back on any upward scroll.
   useGSAP(
     () => {
       const el = header.current;
-      if (!el || prefersReducedMotion()) return;
-      const hide = gsap.to(el, { yPercent: -100, duration: 0.35, ease: "power2.inOut", paused: true });
-      hideTween.current = hide;
+      if (!el) return;
+
+      // Lift the header off the page with a shadow once content scrolls beneath it.
       ScrollTrigger.create({
-        start: 120,
+        start: 8,
         end: "max",
-        onUpdate: (self) => (self.direction === 1 ? hide.play() : hide.reverse()),
-        onLeaveBack: () => hide.reverse(),
+        onToggle: (self) => el.toggleAttribute("data-scrolled", self.isActive),
       });
-      return () => {
-        hideTween.current = null;
-      };
+
+      // On larger screens, tuck the header away while scrolling down and bring it back on any
+      // upward scroll. On phones it stays put so the menu is always one tap away.
+      const mm = gsap.matchMedia();
+      mm.add(`(min-width: 768px) and ${FULL_MOTION}`, () => {
+        const hide = gsap.to(el, { yPercent: -100, duration: 0.35, ease: "power2.inOut", paused: true });
+        hideTween.current = hide;
+        ScrollTrigger.create({
+          start: 120,
+          end: "max",
+          onUpdate: (self) => (self.direction === 1 ? hide.play() : hide.reverse()),
+          onLeaveBack: () => hide.reverse(),
+        });
+        return () => {
+          hideTween.current = null;
+        };
+      });
     },
     { scope: header }
   );
@@ -79,7 +91,10 @@ export function SiteHeader() {
   );
 
   return (
-    <header ref={header} className="sticky top-0 z-50 border-b bg-paper/90 backdrop-blur-md">
+    <header
+      ref={header}
+      className="sticky top-0 z-50 border-b border-rule bg-paper pt-[env(safe-area-inset-top)] transition-shadow data-[scrolled]:shadow-[0_6px_24px_-12px_rgba(15,27,61,0.35)]"
+    >
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
@@ -88,8 +103,14 @@ export function SiteHeader() {
       </a>
 
       <div className="sb-container flex h-16 items-center justify-between gap-6">
-        <Link href="/" className="display-tight text-[1.75rem] font-bold leading-none">
-          SiteBazaar
+        <Link href="/" className="flex items-center gap-2.5" aria-label="SiteBazaar home">
+          <span
+            aria-hidden="true"
+            className="grid size-9 place-items-center rounded-lg bg-ink font-display text-base font-extrabold text-marigold"
+          >
+            SB
+          </span>
+          <span className="display-tight text-[1.4rem] font-extrabold leading-none">SiteBazaar</span>
         </Link>
 
         <nav ref={nav} aria-label="Primary" className="relative hidden items-center gap-7 md:flex">
@@ -130,14 +151,15 @@ function MobileNav({ pathname }: { pathname: string }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="rounded-full md:hidden" aria-label="Open menu">
+        <Button className="h-11 gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white hover:bg-cobalt md:hidden">
           <Menu className="size-5" />
+          Menu
         </Button>
       </SheetTrigger>
 
       <SheetContent side="right" className="w-80 border-l-0 bg-ink p-0 text-white">
         <SheetHeader className="p-6">
-          <SheetTitle className="display-tight text-4xl font-bold text-white">SiteBazaar</SheetTitle>
+          <SheetTitle className="display-tight text-3xl font-bold text-white">SiteBazaar</SheetTitle>
           <SheetDescription className="text-white/60">Websites, sold by the lot.</SheetDescription>
         </SheetHeader>
 

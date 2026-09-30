@@ -20,6 +20,7 @@ import { CountUp } from "@/components/motion/count-up";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const newestFirst = (a: Bid, b: Bid) => Date.parse(b.createdAt) - Date.parse(a.createdAt);
 
@@ -29,6 +30,7 @@ export default function AuctionPage() {
   const now = useNow();
 
   const [history, setHistory] = useState<Bid[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const rivalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,6 +41,7 @@ export default function AuctionPage() {
     if (!listing) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load stored bids once
     setHistory([...getBidsForListing(listing.id), ...makeMockHistory(listing)].sort(newestFirst));
+    setLoaded(true);
   }, [listing]);
 
   useEffect(() => () => {
@@ -119,7 +122,7 @@ export default function AuctionPage() {
           <p className="text-sm text-muted-ink">
             Lot {lotNumber(listing.id)}, {listing.category}
           </p>
-          <h1 className="display-tight mt-2 text-6xl font-bold sm:text-7xl">{shortTitle(listing.title)}</h1>
+          <h1 className="display-tight mt-2 text-5xl font-bold sm:text-6xl">{shortTitle(listing.title)}</h1>
           <p className="mt-4 max-w-md text-muted-ink">{listing.shortPitch}</p>
           <div className="mt-8 overflow-hidden rounded-2xl border bg-card">
             <SitePreview id={listing.id} category={listing.category} />
@@ -131,7 +134,7 @@ export default function AuctionPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-white/60">Current bid</p>
-                <CountUp value={currentBid} flash className="mt-1 block font-display text-6xl font-bold sm:text-7xl" />
+                <CountUp value={currentBid} flash className="mt-1 block font-display text-5xl font-bold sm:text-6xl" />
               </div>
               <div className="text-right">
                 <p className="text-sm text-white/60">{ended ? "Closed" : "Closes in"}</p>
@@ -141,7 +144,7 @@ export default function AuctionPage() {
                     left !== null && left < 864e5 && !ended ? "text-marigold" : "text-white"
                   )}
                 >
-                  {left === null ? " " : timeLeft(left, true)}
+                  {left === null ? <Skeleton className="ml-auto h-8 w-40 bg-white/15" /> : timeLeft(left, true)}
                 </p>
               </div>
             </div>
@@ -214,8 +217,23 @@ export default function AuctionPage() {
               <h2 id="history-title" className="text-xl font-semibold">
                 Bid history
               </h2>
-              <p className="text-sm text-muted-ink">{history.length} bids</p>
+              {loaded ? (
+                <p className="text-sm text-muted-ink">{history.length} bids</p>
+              ) : (
+                <Skeleton className="h-4 w-14" />
+              )}
             </div>
+            {!loaded ? (
+              <ul className="mt-4 divide-y" role="status" aria-label="Loading bid history">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i} className="grid grid-cols-[1fr_auto_6rem] items-center gap-4 py-3.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="ml-auto h-4 w-16" />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <ol ref={list} className="mt-4 divide-y">
               {history.slice(0, 8).map((b) => (
                 <li key={b.id} className="grid grid-cols-[1fr_auto_6rem] items-center gap-4 overflow-hidden py-3 text-sm">

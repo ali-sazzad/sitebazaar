@@ -1,10 +1,12 @@
 import { cn } from "@/lib/utils"
 
-function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+// Rendered as a block-level <span> so it is valid inside text elements like <p> too.
+function Skeleton({ className, ...props }: React.ComponentProps<"span">) {
   return (
-    <div
+    <span
       data-slot="skeleton"
-      className={cn("bg-accent animate-pulse rounded-md", className)}
+      aria-hidden="true"
+      className={cn("block animate-pulse rounded-md bg-ink/10 motion-reduce:animate-none", className)}
       {...props}
     />
   )

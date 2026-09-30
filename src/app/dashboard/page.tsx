@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { ListingCard } from "@/components/listing/listing-card";
 import { SitePreview } from "@/components/listing/site-preview";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ListingSkeleton } from "@/components/listing/listing-skeleton";
 
 type TabKey = "bids" | "watchlist" | "purchases" | "listings" | "recent";
 
@@ -81,7 +83,7 @@ export default function DashboardPage() {
     <div className="sb-container py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="display-tight text-6xl font-bold sm:text-7xl">Dashboard</h1>
+          <h1 className="display-tight text-5xl font-bold sm:text-6xl">Dashboard</h1>
           <p className="mt-3 text-muted-ink">Everything here is saved in this browser.</p>
         </div>
         <Button asChild className="h-11 rounded-full px-6">
@@ -104,15 +106,21 @@ export default function DashboardPage() {
             )}
           >
             {t.label}
-            <span className={cn("tabular rounded-full px-2 py-0.5 text-xs", tab === t.key ? "bg-cobalt text-white" : "bg-paper-deep")}>
-              {data ? t.count : "–"}
-            </span>
+            {data ? (
+              <span className={cn("tabular rounded-full px-2 py-0.5 text-xs", tab === t.key ? "bg-cobalt text-white" : "bg-paper-deep")}>
+                {t.count}
+              </span>
+            ) : (
+              <Skeleton className="h-5 w-6 rounded-full" />
+            )}
           </button>
         ))}
       </div>
 
       <div ref={panel} id="dash-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="pt-8">
-        {!data ? null : tab === "bids" ? (
+        {!data ? (
+          <PanelSkeleton grid={tab === "watchlist" || tab === "listings" || tab === "recent"} />
+        ) : tab === "bids" ? (
           bidRows.length === 0 ? (
             <Empty title="You haven't bid on anything yet" body="Auctions close fast. Find one worth bidding on." href="/marketplace" cta="Browse live auctions" />
           ) : (
@@ -203,6 +211,33 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/** Placeholder shaped like the tab being opened: cards for grids, rows for lists. */
+function PanelSkeleton({ grid }: { grid: boolean }) {
+  if (grid) {
+    return (
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Loading">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <ListingSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <ul className="divide-y border-y" role="status" aria-label="Loading">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <li key={i} className="grid grid-cols-[5rem_1fr_auto] items-center gap-4 py-4 sm:grid-cols-[7rem_1fr_auto] sm:gap-6">
+          <Skeleton className="aspect-[16/10] w-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-40 max-w-full" />
+            <Skeleton className="h-3.5 w-56 max-w-full" />
+          </div>
+          <Skeleton className="h-7 w-16" />
+        </li>
+      ))}
+    </ul>
   );
 }
 

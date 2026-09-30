@@ -17,8 +17,8 @@
 }
 
 @theme inline {
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
 
   --color-paper: var(--paper);
   --color-paper-deep: var(--paper-deep);
@@ -97,12 +97,11 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* condensed display cut of Bricolage Grotesque */
+  /* large display headings: tight tracking and leading */
   .display-tight {
     font-family: var(--font-display);
-    font-variation-settings: "wdth" 75;
-    letter-spacing: -0.035em;
-    line-height: 0.92;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
   }
 }
 

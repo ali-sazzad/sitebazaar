@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Bricolage_Grotesque, Figtree } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Public_Sans, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -7,18 +7,25 @@ import { Toaster } from "@/components/ui/sonner";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { JsFlag } from "@/components/motion/js-flag";
 
-const bricolage = Bricolage_Grotesque({
+const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
-  axes: ["wdth", "opsz"],
-  variable: "--font-bricolage",
+  variable: "--font-schibsted",
   display: "swap",
 });
 
-const figtree = Figtree({
+const publicSans = Public_Sans({
   subsets: ["latin"],
-  variable: "--font-figtree",
+  variable: "--font-public-sans",
   display: "swap",
 });
+
+// Colours the phone browser bar to match the header.
+export const viewport: Viewport = {
+  themeColor: "#f3f4ef",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://sitebazaar.vercel.app"),
@@ -47,7 +54,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${figtree.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${schibsted.variable} ${publicSans.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <JsFlag />
         <SiteHeader />

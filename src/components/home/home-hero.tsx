@@ -109,7 +109,7 @@ export function HomeHero() {
       className="sb-container grid items-center gap-14 pb-20 pt-12 md:pt-20 lg:grid-cols-[1.15fr_1fr]"
     >
       <div>
-        <h1 data-reveal className="hero-line display-tight text-[clamp(3.5rem,11vw,7.5rem)] font-extrabold">
+        <h1 data-reveal className="hero-line display-tight text-[clamp(2.75rem,8.5vw,5.25rem)] font-extrabold">
           Websites, sold by the lot.
         </h1>
         <p data-reveal className="hero-sub mt-7 max-w-md text-lg leading-relaxed text-muted-ink">
@@ -127,7 +127,7 @@ export function HomeHero() {
       </div>
 
       {/* Lot board */}
-      <div className="relative mx-auto w-full max-w-md pr-14 pt-12 lg:max-w-none">
+      <div className="relative mx-auto w-full max-w-md pl-3 pr-12 pt-12 sm:pl-0 sm:pr-14 lg:max-w-none">
         <div className="relative aspect-[4/3.6]">
           {LOTS.map((l, i) => (
             <Link

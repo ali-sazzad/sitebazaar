@@ -11,7 +11,7 @@ export function SiteFooter() {
     <footer className="mt-24 bg-ink text-white">
       <div className="sb-container grid gap-10 py-14 md:grid-cols-[1.4fr_1fr]">
         <div>
-          <p className="display-tight text-5xl font-bold sm:text-6xl">SiteBazaar</p>
+          <p className="display-tight text-4xl font-bold sm:text-5xl">SiteBazaar</p>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
             Websites, sold by the lot. This is a frontend demo: listings, bids and
             purchases live in your browser&apos;s local storage, and no money changes hands.
