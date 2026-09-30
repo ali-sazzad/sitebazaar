@@ -26,11 +26,13 @@ export function HomeHero() {
   useGSAP(
     () => {
       const cards = gsap.utils.toArray<HTMLElement>(".lot-card");
+      // A tighter fan on phones, where the board shares one screen with the headline.
+      const step = window.matchMedia("(min-width: 1024px)").matches ? { x: 26, y: -22 } : { x: 16, y: -14 };
       cards.forEach((card, i) => {
         const depth = (i - front + LOTS.length) % LOTS.length;
         const vars = {
-          x: depth * 26,
-          y: depth * -22,
+          x: depth * step.x,
+          y: depth * step.y,
           scale: 1 - depth * 0.06,
           rotation: depth === 0 ? -2 : depth * 3,
           zIndex: LOTS.length - depth,
@@ -106,29 +108,32 @@ export function HomeHero() {
   return (
     <section
       ref={root}
-      className="sb-container grid items-center gap-14 pb-20 pt-12 md:pt-20 lg:grid-cols-[1.15fr_1fr]"
+      // Below lg the hero is exactly one screen tall (minus the 65px header): text on top,
+      // and the lot board scales to whatever height is left, so the whole hero shows on landing.
+      className="sb-container flex h-[calc(100svh-65px)] min-h-[28rem] flex-col pb-5 pt-6 [@media(max-height:600px)]:pb-3 [@media(max-height:600px)]:pt-4 sm:pt-10 lg:grid lg:h-auto lg:min-h-0 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-14 lg:pb-20 lg:pt-20"
     >
-      <div>
-        <h1 data-reveal className="hero-line display-tight text-[clamp(2.75rem,8.5vw,5.25rem)] font-extrabold">
+      <div className="shrink-0">
+        <h1 data-reveal className="hero-line display-tight text-[clamp(2.4rem,11vw,5.25rem)] font-extrabold [@media(max-height:600px)]:text-[2.25rem]">
           Websites, sold by the lot.
         </h1>
-        <p data-reveal className="hero-sub mt-7 max-w-md text-lg leading-relaxed text-muted-ink">
+        <p data-reveal className="hero-sub mt-4 [@media(max-height:600px)]:mt-3 max-w-md text-base leading-relaxed text-muted-ink sm:text-lg lg:mt-7">
           Bid on finished sites in live auctions, or buy one outright and launch this week.
-          Every lot lists its stack, its seller and its price up front.
+          <span className="hidden sm:inline"> Every lot lists its stack, its seller and its price up front.</span>
         </p>
-        <div data-reveal className="hero-cta mt-9 flex flex-wrap gap-3">
-          <Button asChild size="lg" className="h-12 rounded-full px-7 text-base">
+        <div data-reveal className="hero-cta mt-6 [@media(max-height:600px)]:mt-4 flex flex-wrap gap-3 lg:mt-9">
+          <Button asChild size="lg" className="h-11 rounded-full px-6 text-base sm:h-12 sm:px-7">
             <Link href="/marketplace">Browse lots</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-transparent px-7 text-base">
+          <Button asChild size="lg" variant="outline" className="h-11 rounded-full bg-transparent px-6 text-base sm:h-12 sm:px-7">
             <Link href="/sell">Sell your site</Link>
           </Button>
         </div>
       </div>
 
       {/* Lot board */}
-      <div className="relative mx-auto w-full max-w-md pl-3 pr-12 pt-12 sm:pl-0 sm:pr-14 lg:max-w-none">
-        <div className="relative aspect-[4/3.6]">
+      <div className="relative mt-5 flex min-h-0 flex-1 flex-col pt-8 [@media(max-height:600px)]:mt-2 [@media(max-height:600px)]:pt-6 lg:mt-0 lg:block lg:flex-none lg:pr-14 lg:pt-12">
+        {/* Phones: height-driven (fills the space left), width follows the aspect ratio. */}
+        <div className="relative aspect-[4/3.6] h-full max-h-[24rem] max-w-[calc(100%-2.5rem)] self-start lg:h-auto lg:max-h-none lg:w-full lg:max-w-none">
           {LOTS.map((l, i) => (
             <Link
               key={l.id}
@@ -136,25 +141,25 @@ export function HomeHero() {
               data-reveal
               tabIndex={i === front ? 0 : -1}
               aria-hidden={i === front ? undefined : true}
-              className="lot-card absolute inset-0 flex origin-bottom-left flex-col overflow-hidden rounded-2xl border border-ink/15 bg-card shadow-[0_24px_60px_-20px_rgba(15,27,61,0.35)]"
+              className="lot-card @container absolute inset-0 flex origin-bottom-left flex-col overflow-hidden rounded-2xl border border-ink/15 bg-card shadow-[0_24px_60px_-20px_rgba(15,27,61,0.35)]"
             >
               <SitePreview id={l.id} category={l.category} className="border-b" />
-              <div className="flex flex-1 items-end justify-between gap-4 p-5">
+              <div className="flex flex-1 items-end justify-between gap-3 p-3.5 sm:p-5">
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-ink">
+                  <p className="text-xs text-muted-ink @max-[17rem]:hidden">
                     Lot {lotNumber(l.id)}, {l.category}
                   </p>
-                  <p className="mt-1 truncate font-display text-xl font-semibold">{shortTitle(l.title)}</p>
+                  <p className="mt-0.5 truncate font-display text-lg font-semibold sm:text-xl">{shortTitle(l.title)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-ink">Current bid</p>
-                  <CountUp value={bids[i]} flash className="font-display text-3xl font-bold" />
+                  <p className="text-xs text-muted-ink @max-[17rem]:hidden">Current bid</p>
+                  <CountUp value={bids[i]} flash className="font-display text-2xl font-bold sm:text-3xl" />
                 </div>
               </div>
             </Link>
           ))}
         </div>
-        <p className="mt-10 flex items-center gap-2 text-sm text-muted-ink">
+        <p className="mt-4 flex shrink-0 items-center gap-2 text-sm text-muted-ink lg:mt-10">
           <span className="relative flex size-2.5" aria-hidden="true">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-marigold opacity-75 motion-reduce:hidden" />
             <span className="relative inline-flex size-2.5 rounded-full bg-marigold" />
