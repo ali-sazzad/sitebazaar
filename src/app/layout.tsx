@@ -28,6 +28,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// Static files in /public need the GitHub Pages base path added by hand in metadata.
+const basePath = process.env.PAGES_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://sitebazaar.vercel.app"),
   title: {
@@ -50,6 +53,10 @@ export const metadata: Metadata = {
     title: "SiteBazaar: buy and sell websites",
     description: "Website marketplace with live auctions. Next.js + GSAP + Tailwind.",
     images: ["/og.png"],
+  },
+  icons: {
+    icon: [{ url: `${basePath}/favicon.png`, type: "image/png", sizes: "64x64" }],
+    apple: [{ url: `${basePath}/apple-touch-icon.png`, sizes: "180x180" }],
   },
 };
 
