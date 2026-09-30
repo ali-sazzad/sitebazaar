@@ -1,261 +1,220 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { listings } from "@/lib/mock/listings";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
+
+import { listings, type ListingCategory } from "@/lib/mock/listings";
 import { DEFAULT_FILTERS } from "@/lib/browse/defaults";
-import type { BrowseFilters } from "@/lib/browse/types";
+import type { BrowseFilters, SortKey } from "@/lib/browse/types";
 import { applyBrowsePipeline } from "@/lib/browse/pipeline";
 import { STORAGE_KEYS } from "@/lib/storage/keys";
 import { readLocal, writeLocal } from "@/lib/storage/local";
+import { money } from "@/lib/format";
+import { gsap, useGSAP, Flip, prefersReducedMotion } from "@/lib/motion/gsap";
+import { cn } from "@/lib/utils";
 
 import { ListingCard } from "@/components/listing/listing-card";
 import { ListingSkeleton } from "@/components/listing/listing-skeleton";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
-const categories = ["All", "Portfolio", "Ecommerce", "SaaS", "Blog", "Agency"] as const;
-const techs = ["All", "Next.js", "React", "Vue", "HTML"] as const;
-const sorts = [
-  { value: "popular", label: "Most popular" },
+const CATEGORIES = ["All", "SaaS", "Ecommerce", "Portfolio", "Agency", "Blog"] as const;
+const TECHS = ["All", "Next.js", "React", "Vue", "HTML"] as const;
+const SORTS: { value: SortKey; label: string }[] = [
+  { value: "popular", label: "Most viewed" },
   { value: "newest", label: "Newest" },
-  { value: "endingSoon", label: "Ending soon" },
+  { value: "endingSoon", label: "Ending soonest" },
   { value: "price", label: "Lowest price" },
-] as const;
+];
+const PRICE_CEILING = DEFAULT_FILTERS.priceMax;
 
 export default function MarketplacePage() {
-  const [loading, setLoading] = useState(true);
+  return (
+    <Suspense fallback={null}>
+      <Marketplace />
+    </Suspense>
+  );
+}
 
+function Marketplace() {
+  const params = useSearchParams();
+  const [ready, setReady] = useState(false);
   const [filters, setFilters] = useState<BrowseFilters>(DEFAULT_FILTERS);
+  const grid = useRef<HTMLDivElement>(null);
+  const flipState = useRef<Flip.FlipState | null>(null);
 
-  // Load persisted filters
+  // Restore saved filters; a ?category= link from the home page takes priority.
   useEffect(() => {
     const saved = readLocal<BrowseFilters>(STORAGE_KEYS.browseFilters, DEFAULT_FILTERS);
-    setFilters(saved);
-    // simulate loading for skeleton demo
-    const t = setTimeout(() => setLoading(false), 450);
-    return () => clearTimeout(t);
-  }, []);
+    const fromUrl = params.get("category") as ListingCategory | null;
+    const valid = fromUrl && (CATEGORIES as readonly string[]).includes(fromUrl);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from storage
+    setFilters({ ...DEFAULT_FILTERS, ...saved, ...(valid ? { category: fromUrl } : {}) });
+    setReady(true);
+  }, [params]);
 
-  // Persist filters
   useEffect(() => {
-    if (!loading) writeLocal(STORAGE_KEYS.browseFilters, filters);
-  }, [filters, loading]);
+    if (ready) writeLocal(STORAGE_KEYS.browseFilters, filters);
+  }, [filters, ready]);
 
   const result = useMemo(() => applyBrowsePipeline(listings, filters), [filters]);
 
-  const onReset = () => setFilters(DEFAULT_FILTERS);
+  /** Every filter change goes through here so the grid can FLIP from its old layout. */
+  const update = (patch: Partial<BrowseFilters>) => {
+    if (grid.current && !prefersReducedMotion()) {
+      flipState.current = Flip.getState(grid.current.querySelectorAll("[data-flip-id]"));
+    }
+    setFilters((f) => ({ ...f, ...patch }));
+  };
+
+  useGSAP(
+    () => {
+      const state = flipState.current;
+      if (!state) return;
+      flipState.current = null;
+      Flip.from(state, {
+        targets: grid.current!.querySelectorAll("[data-flip-id]"),
+        duration: 0.55,
+        ease: "power3.inOut",
+        stagger: 0.02,
+        absolute: true,
+        onEnter: (els) =>
+          gsap.fromTo(els, { autoAlpha: 0, scale: 0.92 }, { autoAlpha: 1, scale: 1, duration: 0.45, delay: 0.15 }),
+      });
+    },
+    { dependencies: [result], scope: grid }
+  );
+
+  const reset = () => update(DEFAULT_FILTERS);
+  const isDefault = JSON.stringify(filters) === JSON.stringify(DEFAULT_FILTERS);
 
   return (
-    <div className="sb-container py-10">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="sb-container py-12">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Marketplace</h1>
-          <p className="mt-2 text-slate-600">
-            Search, filter, and sort listings. Favorites/bids come next.
+          <h1 className="display-tight text-6xl font-bold sm:text-7xl">Browse lots</h1>
+          <p className="mt-3 text-muted-ink" aria-live="polite">
+            {ready ? `${result.total} of ${listings.length} lots match` : "Loading lots"}
           </p>
         </div>
-
-        <div className="flex items-center gap-2 md:hidden">
-  <Badge
-    style={{
-      background: "hsla(var(--sb-grad-a) / .12)",
-      color: "hsl(var(--sb-text))",
-    }}
-  >
-    {loading ? "Loading…" : `${result.total} results`}
-  </Badge>
-  <Button variant="outline" className="rounded-full" onClick={onReset}>
-    Reset
-  </Button>
-</div>
-
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-ink" />
+          <Input
+            type="search"
+            aria-label="Search lots"
+            value={filters.query}
+            onChange={(e) => update({ query: e.target.value })}
+            placeholder="Search by name, feature or tag"
+            className="h-11 rounded-full bg-card pl-10"
+          />
+        </div>
       </div>
 
-      <Separator className="my-6" />
+      {/* Category tabs */}
+      <div role="group" aria-label="Category" className="mt-8 flex gap-2 overflow-x-auto overflow-y-hidden border-b pb-4">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={filters.category === c}
+            onClick={() => update({ category: c })}
+            className={cn(
+              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+              filters.category === c ? "bg-ink text-white" : "text-muted-ink hover:bg-paper-deep hover:text-ink"
+            )}
+          >
+            {c === "All" ? "All lots" : c}
+          </button>
+        ))}
+      </div>
 
-      {/* Responsive layout:
-          Mobile: filters on top
-          Desktop: sidebar + grid
-      */}
-      <div className="grid gap-6 md:grid-cols-[280px_1fr]">
-        {/* Filters */}
-        <aside className="md:sticky md:top-24 h-fit rounded-2xl border sb-border bg-white/70 p-4">
-  <div className="flex items-start justify-between gap-3">
-    <div>
-      <p className="text-sm font-semibold text-slate-900">Filters</p>
-      <p className="mt-1 text-sm text-slate-600">
-        These persist automatically.
-      </p>
-    </div>
-
-    {/* Desktop-only: results + reset inside filter card */}
-    <div className="hidden md:flex flex-col items-end gap-2">
-      <Badge
-        style={{
-          background: "hsla(var(--sb-grad-a) / .12)",
-          color: "hsl(var(--sb-text))",
-        }}
-      >
-        {loading ? "Loading…" : `${result.total} results`}
-      </Badge>
-
-      <Button
-        variant="outline"
-        className="h-8 rounded-full px-3 text-xs hover:bg-green-100"
-        onClick={onReset}
-      >
-        Reset
-      </Button>
-    </div>
-  </div>
-
-  <div className="mt-4 space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-600">Search</label>
-              <Input
-                value={filters.query}
-                onChange={(e) => setFilters((p) => ({ ...p, query: e.target.value }))}
-                placeholder="e.g. ecommerce, landing, portfolio…"
-                className="mt-2"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Category</label>
-                <Select
-                  value={filters.category}
-                  onValueChange={(v) => setFilters((p) => ({ ...p, category: v as any }))}
-                >
-                  <SelectTrigger className="mt-2  bg-white/70 border-slate-300 hover:bg-white focus:ring-2 focus:ring-offset-2">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white/85 border-slate-400/50 shadow-xl">
-                    {categories.map((c) => (
-                      <SelectItem 
-                        key={c} 
-                        value={c}
-                        className="focus:bg-slate-100 hover:bg-white/15 data-[state=checked]:bg-slate-100 data-[state=checked]:font-semibold"
-                        >
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Tech</label>
-                <Select
-                  value={filters.tech}
-                  onValueChange={(v) => setFilters((p) => ({ ...p, tech: v as any }))}
-                >
-                  <SelectTrigger className="mt-2  bg-white/70 border-slate-300 hover:bg-white focus:ring-2 focus:ring-offset-2">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white/85 border-slate-400/50 shadow-xl">
-                    {techs.map((t) => (
-                      <SelectItem 
-                        key={t} 
-                        value={t}
-                        className="focus:bg-slate-100 hover:bg-white/15 data-[state=checked]:bg-slate-100 data-[state=checked]:font-semibold"
-                        >
-                          {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Min ($)</label>
-                <Input
-                  type="number"
-                  value={filters.priceMin}
-                  onChange={(e) => setFilters((p) => ({ ...p, priceMin: Number(e.target.value || 0) }))}
-                  className="mt-2  bg-white/70 border-green-300"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Max ($)</label>
-                <Input
-                  type="number"
-                  value={filters.priceMax}
-                  onChange={(e) => setFilters((p) => ({ ...p, priceMax: Number(e.target.value || 0) }))}
-                  className="mt-2  bg-white/70 border-red-300"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600">Sort</label>
-              <Select
-                value={filters.sort}
-                onValueChange={(v) => setFilters((p) => ({ ...p, sort: v as any }))}
-              >
-                <SelectTrigger className="mt-2  bg-white/70 border-slate-300 hover:bg-white focus:ring-2 focus:ring-offset-2">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/85 border-slate-400/50 shadow-xl">
-                  {sorts.map((s) => (
-                    <SelectItem 
-                      key={s.value} 
-                      value={s.value}
-                      className="focus:bg-slate-100 hover:bg-white/15 data-[state=checked]:bg-slate-100 data-[state=checked]:font-semibold"
-                      >
-                        {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <button
-              type="button"
-              className="w-full rounded-xl border sb-border bg-white px-3 py-2 text-left text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
-              onClick={() => setFilters((p) => ({ ...p, auctionOnly: !p.auctionOnly }))}
-              aria-pressed={filters.auctionOnly}
-            >
-              <span className="flex items-center justify-between">
-                <span>Auction only</span>
-                <span
-                  className="rounded-full px-2 py-1 text-xs font-semibold"
-                  style={{
-                    background: filters.auctionOnly
-                      ? "linear-gradient(135deg, hsl(var(--sb-warm)), hsl(var(--sb-grad-a)))"
-                      : "hsla(var(--sb-grad-a)/.10)",
-                    color: filters.auctionOnly ? "white" : "hsl(var(--sb-text))",
-                  }}
-                >
-                  {filters.auctionOnly ? "ON" : "OFF"}
-                </span>
-              </span>
-            </button>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[240px_1fr]">
+        <aside aria-label="Filters" className="h-fit space-y-7 lg:sticky lg:top-24">
+          <div>
+            <Label htmlFor="sort" className="text-sm font-semibold">Sort by</Label>
+            <Select value={filters.sort} onValueChange={(v) => update({ sort: v as SortKey })}>
+              <SelectTrigger id="sort" className="mt-2 h-10 w-full bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORTS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          <fieldset>
+            <legend className="text-sm font-semibold">Built with</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {TECHS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={filters.tech === t}
+                  onClick={() => update({ tech: t })}
+                  className={cn(
+                    "rounded-md border px-3 py-1.5 text-sm transition-colors",
+                    filters.tech === t ? "border-cobalt bg-cobalt text-white" : "bg-card hover:border-ink/40"
+                  )}
+                >
+                  {t === "All" ? "Any" : t}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="flex w-full justify-between text-sm font-semibold">
+              <span>Price</span>
+              <span className="tabular font-normal text-muted-ink">
+                ${money(filters.priceMin)} to ${money(filters.priceMax)}
+              </span>
+            </legend>
+            <Slider
+              className="mt-4"
+              min={0}
+              max={PRICE_CEILING}
+              step={10}
+              value={[filters.priceMin, filters.priceMax]}
+              onValueChange={([priceMin, priceMax]) => update({ priceMin, priceMax })}
+              thumbLabels={["Minimum price", "Maximum price"]}
+            />
+          </fieldset>
+
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="auction-only" className="text-sm font-semibold">Live auctions only</Label>
+            <Switch
+              id="auction-only"
+              checked={filters.auctionOnly}
+              onCheckedChange={(auctionOnly) => update({ auctionOnly })}
+            />
+          </div>
+
+          <Button variant="outline" className="w-full rounded-full" onClick={reset} disabled={isDefault}>
+            Clear filters
+          </Button>
         </aside>
 
-        {/* Results */}
-        <section>
-          {/* Grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {loading ? (
-              Array.from({ length: 9 }).map((_, i) => <ListingSkeleton key={i} />)
+        <section aria-label="Results">
+          <div ref={grid} className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {!ready ? (
+              Array.from({ length: 6 }).map((_, i) => <ListingSkeleton key={i} />)
             ) : result.total === 0 ? (
-              <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border sb-border bg-white/70 p-8">
-                <p className="text-lg font-semibold text-slate-900">No results</p>
-                <p className="mt-1 text-slate-600">
-                  Try changing your filters or search term.
+              <div className="rounded-xl border border-dashed p-10 sm:col-span-2 xl:col-span-3">
+                <h2 className="text-2xl font-semibold">No lots match these filters</h2>
+                <p className="mt-2 text-muted-ink">
+                  Widen the price range or clear a filter to see more.
                 </p>
-                <Button className="mt-4 rounded-full" variant="outline" onClick={onReset}>
-                  Reset filters
+                <Button className="mt-5 rounded-full" onClick={reset}>
+                  Clear filters
                 </Button>
               </div>
             ) : (

@@ -1,46 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { ArrowUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from "@/lib/motion/gsap";
 
 export function BackToTop() {
-  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setVisible(window.scrollY > 500);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  useGSAP(() => {
+    const el = ref.current;
+    if (!el) return;
+    gsap.set(el, { autoAlpha: 0, y: 16 });
+    ScrollTrigger.create({
+      start: 600,
+      end: "max",
+      onToggle: (self) =>
+        gsap.to(el, { autoAlpha: self.isActive ? 1 : 0, y: self.isActive ? 0 : 16, duration: 0.3 }),
+    });
+  });
 
   const goTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    gsap.to(window, {
+      scrollTo: 0,
+      duration: prefersReducedMotion() ? 0 : 0.9,
+      ease: "power3.inOut",
+    });
+    document.getElementById("main")?.focus({ preventScroll: true });
   };
 
   return (
-    <div
-      className={[
-        "fixed bottom-6 right-6 z-50 transition-all duration-200",
-        "supports-[padding:env(safe-area-inset-bottom)]:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3 pointer-events-none",
-      ].join(" ")}
+    <button
+      ref={ref}
+      type="button"
+      onClick={goTop}
+      aria-label="Back to top"
+      className="invisible fixed bottom-6 right-6 z-40 grid size-12 place-items-center rounded-full bg-ink text-white shadow-lg hover:bg-cobalt"
     >
-      <Button
-        onClick={goTop}
-        aria-label="Back to top"
-        className="h-11 cursor-pointer rounded-full px-4 text-white shadow-lg"
-        style={{
-          background:
-            "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-        }}
-      >
-        <ArrowUp className="mr-2 h-4 w-4" />
-        Top
-      </Button>
-    </div>
+      <ArrowUp className="size-5" />
+    </button>
   );
 }

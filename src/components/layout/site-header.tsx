@@ -2,242 +2,163 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ArrowRight, Home, Store, BadgeDollarSign, LayoutDashboard } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Menu } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion } from "@/lib/motion/gsap";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 
-/**
- * Replaceable nav items (edit labels/routes anytime)
- */
 const NAV = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
-  { href: "/sell", label: "Sell a Site", icon: BadgeDollarSign },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/marketplace", label: "Browse lots" },
+  { href: "/sell", label: "Sell a site" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const header = useRef<HTMLElement>(null);
+  const nav = useRef<HTMLElement>(null);
+  const marker = useRef<HTMLSpanElement>(null);
+  const hideTween = useRef<gsap.core.Tween | null>(null);
+
+  // Tuck the header away while scrolling down, bring it back on any upward scroll.
+  useGSAP(
+    () => {
+      const el = header.current;
+      if (!el || prefersReducedMotion()) return;
+      const hide = gsap.to(el, { yPercent: -100, duration: 0.35, ease: "power2.inOut", paused: true });
+      hideTween.current = hide;
+      ScrollTrigger.create({
+        start: 120,
+        end: "max",
+        onUpdate: (self) => (self.direction === 1 ? hide.play() : hide.reverse()),
+        onLeaveBack: () => hide.reverse(),
+      });
+      return () => {
+        hideTween.current = null;
+      };
+    },
+    { scope: header }
+  );
+
+  // A new page always starts with the header in view.
+  useEffect(() => {
+    hideTween.current?.reverse();
+  }, [pathname]);
+
+  // Slide the underline to whichever nav item matches the route.
+  useGSAP(
+    () => {
+      const bar = marker.current;
+      const links = nav.current?.querySelectorAll<HTMLAnchorElement>("a[data-nav]");
+      if (!bar || !links) return;
+      const active = Array.from(links).find((a) => isActive(pathname, a.dataset.nav!));
+      if (!active) {
+        gsap.to(bar, { autoAlpha: 0, duration: 0.2 });
+        return;
+      }
+      const target = { x: active.offsetLeft, width: active.offsetWidth, autoAlpha: 1 };
+      if (prefersReducedMotion()) gsap.set(bar, target);
+      else gsap.to(bar, { ...target, duration: 0.45, ease: "power3.inOut" });
+    },
+    { dependencies: [pathname], scope: nav }
+  );
 
   return (
-    <header className="sticky top-0 z-50 border-b sb-border bg-white/80 backdrop-blur">
+    <header ref={header} className="sticky top-0 z-50 border-b bg-paper/90 backdrop-blur-md">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
       >
         Skip to content
       </a>
 
-      <div className="sb-container flex h-16 items-center justify-between gap-3">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 min-w-0">
-          <span
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white font-semibold"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-            }}
-            aria-hidden="true"
-          >
-            SB
-          </span>
-
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-semibold text-slate-900">SiteBazaar</p>
-            <p className="truncate text-xs text-slate-600">Buy & sell websites</p>
-          </div>
+      <div className="sb-container flex h-16 items-center justify-between gap-6">
+        <Link href="/" className="display-tight text-[1.75rem] font-bold leading-none">
+          SiteBazaar
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {NAV.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                  active
-                    ? "text-white"
-                    : "text-slate-700 hover:bg-slate-100"
-                )}
-                style={
-                  active
-                    ? {
-                        background:
-                          "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-                      }
-                    : undefined
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav ref={nav} aria-label="Primary" className="relative hidden items-center gap-7 md:flex">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              data-nav={item.href}
+              aria-current={isActive(pathname, item.href) ? "page" : undefined}
+              className={cn(
+                "py-5 text-sm font-medium transition-colors",
+                isActive(pathname, item.href) ? "text-ink" : "text-muted-ink hover:text-ink"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <span
+            ref={marker}
+            aria-hidden="true"
+            className="invisible absolute bottom-0 left-0 h-0.5 bg-cobalt"
+            style={{ width: 0 }}
+          />
         </nav>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-2">
-          {/* Desktop primary CTA */}
-          <Button
-            asChild
-            className="hidden rounded-full text-white md:inline-flex"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-            }}
-          >
-            <Link href="/marketplace">Browse</Link>
+          <Button asChild className="hidden rounded-full px-5 md:inline-flex">
+            <Link href="/sell">List your site</Link>
           </Button>
-
-          {/* Mobile Menu */}
-          <MobileNav />
+          <MobileNav pathname={pathname} />
         </div>
       </div>
     </header>
   );
 }
 
-function MobileNav() {
-  const pathname = usePathname();
-
+function MobileNav({ pathname }: { pathname: string }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="md:hidden rounded-xl border-slate-200 bg-white"
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5 text-slate-900" />
+        <Button variant="outline" size="icon" className="rounded-full md:hidden" aria-label="Open menu">
+          <Menu className="size-5" />
         </Button>
       </SheetTrigger>
 
-      {/* IMPORTANT: force solid background + strong contrast */}
-      <SheetContent side="right" className="w-85 p-0 bg-white/70 text-slate-900">
-        {/* Header strip with subtle gradient (NOT washed out) */}
-        <div className="px-5 pb-5 pt-6 border-b border-slate-200">
-          <div
-            className="rounded-2xl p-4"
-            style={{
-              background:
-                "radial-gradient(800px 220px at 10% 0%, hsla(var(--sb-grad-a) / .35), transparent 60%), radial-gradient(700px 220px at 90% 0%, hsla(var(--sb-grad-b) / .16), transparent 60%), linear-gradient(180deg, hsla(var(--sb-grad-a) / .06), transparent 70%)",
-            }}
-          >
-            <SheetHeader>
-              <SheetTitle className="text-base text-slate-900">SiteBazaar</SheetTitle>
-            </SheetHeader>
+      <SheetContent side="right" className="w-80 border-l-0 bg-ink p-0 text-white">
+        <SheetHeader className="p-6">
+          <SheetTitle className="display-tight text-4xl font-bold text-white">SiteBazaar</SheetTitle>
+          <SheetDescription className="text-white/60">Websites, sold by the lot.</SheetDescription>
+        </SheetHeader>
 
-            <p className="mt-1 text-md text-slate-600">
-              Browse listings, auctions, and your dashboard.
-            </p>
-
-            {/* Strong CTAs (white text on gradient) */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-  <SheetClose asChild>
-    <Button
-      asChild
-      className="rounded-xl text-white"
-      style={{
-        background:
-          "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-      }}
-    >
-      <Link href="/marketplace">
-        Browse <ArrowRight className="ml-2 h-4 w-4" />
-      </Link>
-    </Button>
-  </SheetClose>
-
-  <SheetClose asChild>
-    <Button
-      asChild
-      variant="outline"
-      className="rounded-xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-    >
-      <Link href="/sell">Sell</Link>
-    </Button>
-  </SheetClose>
-</div>
-
-          </div>
-        </div>
-
-        {/* Nav list (cards for visibility) */}
-        <nav className="px-4 pb-6 pt-4" aria-label="Mobile">
-          <p className="mb-3 text-xs font-semibold tracking-wide text-slate-500">
-            MENU
-          </p>
-
-          <ul className="space-y-2">
-            {NAV.map((item) => {
-              const active = pathname === item.href;
-              const Icon = item.icon;
-
-              return (
-                <li key={item.href}>
-                  <SheetClose asChild>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition",
-                        "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                        active
-                          ? "text-white border-transparent"
-                          : "bg-slate-50 text-slate-900 border-slate-200 hover:bg-slate-100"
-                      )}
-                      style={
-                        active
-                          ? {
-                              background:
-                                "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-                            }
-                          : undefined
-                      }
-                    >
-                      <span className="flex items-center gap-3">
-                        <span
-                          className={cn(
-                            "grid h-9 w-9 place-items-center rounded-xl border",
-                            active
-                              ? "border-white/25 bg-white/15"
-                              : "border-slate-200 bg-white"
-                          )}
-                          aria-hidden="true"
-                        >
-                          <Icon className={cn("h-4 w-4", active ? "text-white" : "text-slate-900")} />
-                        </span>
-                        {item.label}
-                      </span>
-
-                      <span className={cn("text-xs", active ? "text-white/90" : "text-slate-500")}>
-                        →
-                      </span>
-                    </Link>
-                  </SheetClose>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Tip (more contrast) */}
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Tip</p>
-            <p className="mt-1 text-sm text-slate-600">
-              Mobile-first UI: bigger tap targets, clear active states, and no cramped nav.
-            </p>
-          </div>
+        <nav aria-label="Mobile" className="flex flex-col px-6">
+          {[{ href: "/", label: "Home" }, ...NAV].map((item) => {
+            const active = item.href === "/" ? pathname === "/" : isActive(pathname, item.href);
+            return (
+              <SheetClose asChild key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "border-b border-white/10 py-4 font-display text-2xl font-semibold",
+                    active ? "text-marigold" : "text-white hover:text-marigold"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              </SheetClose>
+            );
+          })}
         </nav>
       </SheetContent>
     </Sheet>

@@ -1,37 +1,71 @@
-# SiteBazaar — Website Marketplace (Frontend Only)
+# SiteBazaar: websites, sold by the lot
 
-SiteBazaar is a colorful, modern marketplace UI for buying & selling websites.
-It includes simulated auctions/bidding, search/filter/sort, favorites, recently viewed, and a dashboard — all persisted with localStorage.
+A marketplace for buying and selling websites, designed like an auction house. Browse lots, bid in
+live auctions, or buy a finished site outright. Frontend only: listings, bids, purchases and your
+watchlist are stored in the browser's localStorage and no payment is taken.
 
-## Tech Stack
-- Next.js (App Router)
-- React + TypeScript
-- Tailwind CSS
-- shadcn/ui (Radix + Tailwind)
+## Tech stack
+
+- Next.js 16 (App Router, React Compiler) with React 19 and TypeScript
+- Tailwind CSS 4 with shadcn/ui (Radix primitives)
+- GSAP 3 with `@gsap/react` (SplitText, ScrollTrigger, Flip, ScrollToPlugin)
 - Sonner for toasts
 
-## Features
-- Multi-page routing (Home, Marketplace, Listing Detail, Auction, Sell, Dashboard)
-- Marketplace browse pipeline: search, filters, sorting, skeleton loaders, empty states
-- Listing detail with mock gallery, seller card, score badges
-- Auction bidding flow (frontend-simulated): countdown UI, min increment validation, bid history
-- localStorage persistence: favorites, bids, recently viewed, last used filters
-- Accessibility-first UI: semantic headings, focus-visible states, keyboard-friendly controls
-- SEO basics: metadata per page + OpenGraph defaults
+## Motion (GSAP)
 
-## Getting Started
+Motion is used either for one orchestrated moment or in response to what the visitor does.
+
+| Where | What | GSAP |
+| --- | --- | --- |
+| Home hero | Headline words rise in, then three auction lots are dealt onto a board. The front lot takes live bids and the stack rotates | Timeline, SplitText, `delayedCall` |
+| Bid amounts | Prices count up to their new value and flash when a bid lands | Tweened counter (`CountUp`) |
+| How a sale works | The progress rule fills as you scroll through the three steps | ScrollTrigger (scrubbed) |
+| Browse lots | Cards glide to their new positions when filters change | Flip |
+| Auction room | New bids slide into the history | `gsap.from` on the new row |
+| Checkout | A "Sold" stamp comes down on purchase | `fromTo` with `back.out` |
+| Watchlist | The heart pops when you save a lot | Elastic ease |
+| Header | Hides on scroll down, returns on scroll up; the active-page underline slides between links | ScrollTrigger, tweened position |
+
+Everything checks `prefers-reduced-motion`. Reduced-motion visitors, and anyone without JavaScript,
+get the final state straight away.
+
+## Features
+
+- Home: live lot board, auctions closing soonest, category index, sale process
+- Browse lots: search, category, technology, price range, auction-only filter and sort, all saved
+  between visits. Category links from the home page (`/marketplace?category=SaaS`) apply straight away
+- Lot page: generated site preview, included pages, seller, buy now with escrow fee breakdown,
+  watchlist
+- Auction room: live countdown, minimum increments, quick-bid amounts, simulated rival bidders,
+  bid history
+- Sell: validated listing form with live preview and optional auction closing time
+- Dashboard: your bids, watchlist, purchases, listings and recently viewed lots
+- Per-lot page titles and descriptions, Open Graph defaults, skip link, visible focus, labelled
+  controls
+
+## Getting started
+
 ```bash
 npm install
 npm run dev
 ```
 
-## Hiring Manager Checklist ✅
-- App Router with multiple routes and shared layout
-- Reusable component system (buttons/cards/badges/dialog/toast/skeleton)
-- Search + filter + sort pipeline (real UI complexity)
-- Form validation + conditional fields (auction toggle)
-- Local persistence (favorites, bids, drafts, recents)
-- A11y: focus states, semantic headings, skip link
-- UX polish: skeletons, empty states, success/error states
-- Clean code structure (lib/ separation, UI components)
-- Production-ready deploy (Vercel)
+Then open http://localhost:3000.
+
+## Project structure
+
+```
+src/
+  app/                 routes (home, marketplace, listing/[id], auctions/[id], sell, dashboard)
+  components/
+    home/              hero lot board, closing soon, category index, sale process
+    listing/           listing card, generated site preview, watchlist button
+    motion/            CountUp and the no-JS reveal flag
+    layout/            header, footer, back to top
+    ui/                shadcn/ui primitives
+  lib/
+    motion/gsap.ts     registers GSAP plugins in one place
+    format.ts          money, lot numbers, countdowns
+    browse/            filter and sort pipeline
+    auction/ bids/ favorites/ purchases/ recent/ listings/   localStorage-backed state
+```

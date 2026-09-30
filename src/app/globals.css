@@ -1,125 +1,148 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* --- SiteBazaar brand tokens (cohesive, not rainbow) --- */
+/* --- SiteBazaar tokens: an auction house for websites --- */
 :root {
-  /* Brand */
-  --sb-primary: 262 83% 58%; /* vivid violet */
-  --sb-accent: 190 95% 45%;  /* cyan accent */
-  --sb-warm: 24 95% 55%;     /* small warm highlight (sparingly) */
-
-  /* Surfaces */
-  --sb-bg: 240 20% 99%;
-  --sb-surface: 0 0% 100%;
-  --sb-tint: 262 83% 97%;    /* soft violet tint */
-  --sb-text: 222 47% 11%;
-  --sb-muted: 215 16% 47%;
-  --sb-border: 220 14% 92%;
-
-  /* Gradient */
-  --sb-grad-a: 262 83% 58%;
-  --sb-grad-b: 190 95% 45%;
+  --paper: #f3f4ef;      /* drafting paper, cool not cream */
+  --paper-deep: #e8eae2; /* recessed surfaces */
+  --card: #fbfbf8;
+  --ink: #0f1b3d;        /* deep navy ink */
+  --muted: #5a6378;
+  --rule: #d6d9cf;
+  --cobalt: #2447f5;     /* actions */
+  --cobalt-deep: #1a34c4;
+  --marigold: #ffb21a;   /* live auction signal only */
+  --danger: #c2331b;
+  --radius: 0.75rem;
 }
 
-html, body {
-  height: 100%;
-  scroll-behavior: smooth; 
+@theme inline {
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-muted-ink: var(--muted);
+  --color-rule: var(--rule);
+  --color-cobalt: var(--cobalt);
+  --color-cobalt-deep: var(--cobalt-deep);
+  --color-marigold: var(--marigold);
+
+  /* shadcn/ui semantic tokens mapped onto the palette */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-card: var(--card);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--cobalt);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--paper-deep);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--paper-deep);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--paper-deep);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--danger);
+  --color-border: var(--rule);
+  --color-input: var(--rule);
+  --color-ring: var(--cobalt);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-body {
-  background: hsl(var(--sb-bg));
-  color: hsl(var(--sb-text));
+@layer base {
+  * {
+    border-color: var(--rule);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cobalt);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--marigold);
+    color: var(--ink);
+  }
 }
 
 @layer utilities {
   .sb-container {
-    @apply mx-auto w-full max-w-6xl px-4;
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
   }
 
-  .sb-muted {
-    color: hsl(var(--sb-muted));
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 
-  .sb-border {
-    border-color: hsl(var(--sb-border));
-  }
-
-  .sb-hero {
-    background:
-      radial-gradient(1200px 500px at 20% 10%, hsla(var(--sb-grad-a) / .20), transparent 55%),
-      radial-gradient(900px 400px at 80% 0%, hsla(var(--sb-grad-b) / .18), transparent 55%),
-      linear-gradient(180deg, hsla(var(--sb-grad-a) / .06), transparent 60%);
-  }
-
-  .sb-gradient-text {
-    background: linear-gradient(90deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .sb-chip {
-    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
-    background: hsla(var(--sb-grad-a) / .10);
-    color: hsl(var(--sb-text));
-    border: 1px solid hsla(var(--sb-grad-a) / .18);
-  }
-
-  .sb-card {
-    @apply rounded-2xl border bg-white/80 backdrop-blur;
-    border-color: hsl(var(--sb-border));
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  /* condensed display cut of Bricolage Grotesque */
+  .display-tight {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
   }
 }
-/* --- Sonner toast styling (more visible) --- */
-[data-sonner-toaster] {
-  --toast-bg: #ffffff;              /* dark, high contrast */
-  --toast-text: #0b1020;
-  --toast-border: rgba(255,255,255,.14);
+
+/* Elements GSAP reveals start hidden only once JS has taken over,
+   so no-JS and reduced-motion visitors always see content. */
+.js [data-reveal] {
+  visibility: hidden;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js [data-reveal] {
+    visibility: visible;
+  }
+}
+
+/* Sonner toasts in the house style */
 [data-sonner-toast] {
-  background: var(--toast-bg) !important;
-  color: var(--toast-text) !important;
-  border: 1px solid var(--toast-border) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.35) !important;
+  font-family: var(--font-sans) !important;
+  background: var(--ink) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(15, 27, 61, 0.28) !important;
 }
 
 [data-sonner-toast] [data-title],
 [data-sonner-toast] [data-description] {
-  color: var(--toast-text) !important;
-  opacity: 0.95;
-}
-/* Make native date/time picker icons visible (mobile + desktop) */
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"] {
-  -webkit-appearance: none;
-  appearance: none;
+  color: #fff !important;
 }
 
-/* Safari/Chrome picker indicator */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  opacity: 1;
-  display: block;
-  filter: none;
-  cursor: pointer;
-}
-
-/* If your inputs use dark text, this helps on some themes */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  background-color: transparent;
-}
-/* Make native date/time picker indicators visible where supported */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  opacity: 1;
-  display: block;
+/* Date/time pickers draw their own icon (see PickerInput). The native indicator stays
+   clickable but transparent, sitting underneath that icon so there is only ever one. */
+.sb-picker::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
   cursor: pointer;
 }
