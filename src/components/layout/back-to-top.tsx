@@ -51,10 +51,16 @@ export function BackToTop() {
   });
 
   const goTop = () => {
+    // CSS smooth scrolling would animate each step GSAP takes and the two fight, stopping short
+    // of the top. Switch it off for the length of the tween.
+    const html = document.documentElement;
+    html.style.scrollBehavior = "auto";
     gsap.to(window, {
       scrollTo: 0,
       duration: prefersReducedMotion() ? 0 : 0.9,
       ease: "power3.inOut",
+      onComplete: () => html.style.removeProperty("scroll-behavior"),
+      onInterrupt: () => html.style.removeProperty("scroll-behavior"),
     });
     document.getElementById("main")?.focus({ preventScroll: true });
   };

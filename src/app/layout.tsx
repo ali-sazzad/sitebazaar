@@ -62,7 +62,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${publicSans.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${schibsted.variable} ${publicSans.variable}`}
+      // Smooth scrolling (globals.css) is for in-page jumps only. This tells Next to switch it off
+      // while changing pages, so every new page opens at the top instead of mid-scroll.
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <body className="flex min-h-screen flex-col">
         <JsFlag />
         <ThemeProvider>
