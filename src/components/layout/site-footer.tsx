@@ -1,46 +1,34 @@
 import Link from "next/link";
 
+const LINKS = [
+  { href: "/marketplace", label: "Browse lots" },
+  { href: "/sell", label: "List a site" },
+  { href: "/dashboard", label: "Your dashboard" },
+];
+
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t sb-border">
-      <div className="sb-container py-10">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className="text-sm font-semibold">SiteBazaar</p>
-            <p className="mt-1 max-w-md text-sm sb-muted">
-              Frontend-only marketplace demo: listings, filters, simulated bidding,
-              favorites, and a dashboard — designed to look like a real SaaS product.
-            </p>
-          </div>
-
-          <div className="flex gap-10 text-sm">
-            <div className="flex flex-col gap-2">
-              <p className="font-semibold">Product</p>
-              <Link className="sb-muted hover:text-slate-900" href="/marketplace">
-                Marketplace
-              </Link>
-              <Link className="sb-muted hover:text-slate-900" href="/sell">
-                Sell a Site
-              </Link>
-              <Link className="sb-muted hover:text-slate-900" href="/dashboard">
-                Dashboard
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <p className="font-semibold">Trust (Mock)</p>
-              <p className="sb-muted">Verified sellers</p>
-              <p className="sb-muted">Secure escrow</p>
-              <p className="sb-muted">Buyer protection</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 flex items-center justify-between border-t sb-border pt-6 text-xs sb-muted">
-          <p>© {new Date().getFullYear()} SiteBazaar (demo)</p>
-          <p>
-            Built with Next.js + Tailwind + shadcn/ui
+    <footer className="mt-24 bg-ink text-white">
+      <div className="sb-container grid gap-10 py-14 md:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p className="display-tight text-5xl font-bold sm:text-6xl">SiteBazaar</p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
+            Websites, sold by the lot. This is a frontend demo: listings, bids and
+            purchases live in your browser&apos;s local storage, and no money changes hands.
           </p>
+        </div>
+        <nav aria-label="Footer" className="flex flex-col gap-3 text-sm md:items-end">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="text-white/80 hover:text-marigold">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <div className="border-t border-white/10">
+        <div className="sb-container flex flex-col gap-2 py-5 text-xs text-white/50 sm:flex-row sm:justify-between">
+          <p>&copy; {new Date().getFullYear()} SiteBazaar demo</p>
+          <p>Next.js, GSAP, Tailwind CSS, shadcn/ui</p>
         </div>
       </div>
     </footer>
