@@ -87,7 +87,7 @@ export default function ListingDetailPage() {
               <>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-ink">Current bid, {listing.bidCount} bids</p>
-                  <span className="rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold">
+                  <span className="rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold text-night">
                     {now === null ? "Live" : `${timeLeft(Date.parse(listing.endsAt) - now)} left`}
                   </span>
                 </div>
@@ -114,7 +114,7 @@ export default function ListingDetailPage() {
           <div className="flex items-center gap-4 rounded-2xl border bg-card p-6">
             <span
               aria-hidden="true"
-              className="grid size-12 shrink-0 place-items-center rounded-full bg-ink font-display text-xl font-bold text-white"
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-night font-display text-xl font-bold text-white"
             >
               {listing.seller.name[0]}
             </span>

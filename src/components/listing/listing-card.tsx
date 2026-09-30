@@ -23,8 +23,8 @@ export function ListingCard({ listing, className }: { listing: Listing; classNam
           className="transition-transform duration-500 group-hover:scale-[1.03]"
         />
         {listing.isAuction ? (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold text-ink">
-            <span className="size-1.5 rounded-full bg-ink" aria-hidden="true" />
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold text-night">
+            <span className="size-1.5 rounded-full bg-night" aria-hidden="true" />
             Live auction
           </span>
         ) : null}

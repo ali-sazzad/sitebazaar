@@ -66,7 +66,7 @@ export function BackToTop() {
       onClick={goTop}
       aria-label="Back to top"
       title="Back to top"
-      className="group invisible fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-40 grid size-14 place-items-center rounded-full bg-ink text-white shadow-[0_12px_32px_-8px_rgba(15,27,61,0.55)] ring-1 ring-white/20 transition-colors hover:bg-cobalt focus-visible:outline-offset-4 sm:right-8 sm:bottom-[calc(2rem+env(safe-area-inset-bottom))]"
+      className="group invisible fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-40 grid size-14 place-items-center rounded-full bg-night text-white shadow-[0_12px_32px_-8px_rgba(15,27,61,0.55)] ring-1 ring-white/20 transition-colors hover:bg-cobalt focus-visible:outline-offset-4 sm:right-8 sm:bottom-[calc(2rem+env(safe-area-inset-bottom))]"
     >
       <svg viewBox="0 0 56 56" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
         <circle cx="28" cy="28" r={R} fill="none" stroke="currentColor" strokeOpacity="0.18" strokeWidth="2.5" />

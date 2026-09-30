@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { JsFlag } from "@/components/motion/js-flag";
+import { ThemeProvider } from "@/components/layout/theme-provider";
 
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
@@ -57,13 +58,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${schibsted.variable} ${publicSans.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <JsFlag />
-        <SiteHeader />
-        <main id="main" tabIndex={-1} className="flex-1 outline-none">
-          {children}
-        </main>
-        <SiteFooter />
-        <BackToTop />
-        <Toaster position="bottom-left" />
+        <ThemeProvider>
+          <SiteHeader />
+          <main id="main" tabIndex={-1} className="flex-1 outline-none">
+            {children}
+          </main>
+          <SiteFooter />
+          <BackToTop />
+          <Toaster position="bottom-left" />
+        </ThemeProvider>
       </body>
     </html>
   );

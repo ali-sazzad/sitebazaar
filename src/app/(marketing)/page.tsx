@@ -26,7 +26,7 @@ export default function HomePage() {
               List it in a few minutes. Set a price, or open an auction and let buyers decide what it&apos;s worth.
             </p>
           </div>
-          <Button asChild size="lg" className="h-12 rounded-full bg-white px-7 text-base text-ink hover:bg-marigold">
+          <Button asChild size="lg" className="h-12 rounded-full bg-white px-7 text-base text-night hover:bg-marigold">
             <Link href="/sell">List your site</Link>
           </Button>
         </div>

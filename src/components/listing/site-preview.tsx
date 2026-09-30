@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * A miniature, generated wireframe of the site being sold. Each category gets a
  * layout that reads like that kind of website; colours are seeded from the listing id.
+ * A skeleton-style shimmer sweeps across it (see .sb-shimmer in globals.css).
  */
 export function SitePreview({
   id,
@@ -22,6 +23,8 @@ export function SitePreview({
     "--p-accent": `hsl(${h} 78% 52%)`,
     "--p-soft": `hsl(${h} 55% 88%)`,
     "--p-line": `hsl(${h} 20% 82%)`,
+    // Offset each preview so neighbouring cards shimmer in a wave, not in unison.
+    "--shimmer-delay": `${((h % 12) * 0.18).toFixed(2)}s`,
   } as React.CSSProperties;
 
   return (
@@ -29,7 +32,7 @@ export function SitePreview({
       aria-hidden="true"
       style={vars}
       className={cn(
-        "relative flex aspect-[16/10] w-full flex-col overflow-hidden bg-[var(--p-bg)]",
+        "sb-shimmer relative flex aspect-[16/10] w-full flex-col overflow-hidden bg-[var(--p-bg)] [filter:brightness(var(--preview-dim))]",
         className
       )}
     >

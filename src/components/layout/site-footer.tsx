@@ -8,7 +8,7 @@ const LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 bg-ink text-white">
+    <footer className="mt-24 bg-night text-white">
       <div className="sb-container grid gap-10 py-14 md:grid-cols-[1.4fr_1fr]">
         <div>
           <p className="display-tight text-4xl font-bold sm:text-5xl">SiteBazaar</p>

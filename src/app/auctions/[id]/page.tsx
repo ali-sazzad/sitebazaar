@@ -130,7 +130,7 @@ export default function AuctionPage() {
         </div>
 
         <div className="space-y-6">
-          <section aria-label="Bidding" className="rounded-2xl bg-ink p-6 text-white sm:p-8">
+          <section aria-label="Bidding" className="rounded-2xl bg-night p-6 text-white sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-white/60">Current bid</p>
@@ -153,7 +153,7 @@ export default function AuctionPage() {
               <p
                 className={cn(
                   "mt-6 rounded-lg px-4 py-3 text-sm font-medium",
-                  leading ? "bg-marigold text-ink" : "bg-white/10 text-white"
+                  leading ? "bg-marigold text-night" : "bg-white/10 text-white"
                 )}
                 role="status"
               >
@@ -186,7 +186,7 @@ export default function AuctionPage() {
                 <Button
                   type="submit"
                   disabled={ended || now === null}
-                  className="h-12 rounded-full bg-marigold px-7 text-base text-ink hover:bg-white"
+                  className="h-12 rounded-full bg-marigold px-7 text-base text-night hover:bg-white"
                 >
                   Place bid
                 </Button>

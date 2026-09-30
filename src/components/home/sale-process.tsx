@@ -40,7 +40,7 @@ export function SaleProcess() {
   );
 
   return (
-    <section ref={root} className="bg-ink text-white">
+    <section ref={root} className="bg-night text-white">
       <div className="sb-container py-20">
         <h2 className="max-w-xl text-4xl font-bold sm:text-5xl">How a sale works</h2>
         <div className="steps relative mt-14">
@@ -50,7 +50,7 @@ export function SaleProcess() {
           <ol className="relative grid gap-12 md:grid-cols-3 md:gap-10">
             {STEPS.map((s, i) => (
               <li key={s.title} className="step relative pl-10 md:pl-0 md:pt-10">
-                <span className="absolute left-0 mt-1 size-[15px] rounded-full border-2 border-marigold bg-ink md:top-0 md:mt-0" aria-hidden="true" />
+                <span className="absolute left-0 mt-1 size-[15px] rounded-full border-2 border-marigold bg-night md:top-0 md:mt-0" aria-hidden="true" />
                 <p className="font-display text-sm text-marigold">Step {i + 1}</p>
                 <h3 className="mt-2 text-2xl font-semibold">{s.title}</h3>
                 <p className="mt-3 max-w-xs leading-relaxed text-white/70">{s.body}</p>

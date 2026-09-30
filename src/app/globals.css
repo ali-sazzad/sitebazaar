@@ -1,12 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Dark mode follows the .dark class that next-themes puts on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* --- SiteBazaar tokens: an auction house for websites --- */
 :root {
   --paper: #f3f4ef;      /* drafting paper, cool not cream */
   --paper-deep: #e8eae2; /* recessed surfaces */
   --card: #fbfbf8;
-  --ink: #0f1b3d;        /* deep navy ink */
+  --ink: #0f1b3d;        /* text: deep navy ink */
+  --night: #0f1b3d;      /* always-dark panels (footer, bid panel); stays dark in both themes */
   --muted: #5a6378;
   --rule: #d6d9cf;
   --cobalt: #2447f5;     /* actions */
@@ -14,6 +18,27 @@
   --marigold: #ffb21a;   /* live auction signal only */
   --danger: #c2331b;
   --radius: 0.75rem;
+  --preview-dim: 1;
+  --shimmer: rgba(255, 255, 255, 0.6);
+  color-scheme: light;
+}
+
+/* Dark theme: the same auction house after hours. Surfaces go deep navy, text goes pale,
+   marigold stays the live-auction signal. */
+.dark {
+  --paper: #0b1226;
+  --paper-deep: #141d38;
+  --card: #111a33;
+  --ink: #e8ebf4;
+  --night: #1b2852;
+  --muted: #98a2bb;
+  --rule: #26314f;
+  --cobalt: #5372ff;
+  --cobalt-deep: #3d5cf5;
+  --danger: #ff6b52;
+  --preview-dim: 0.9;
+  --shimmer: rgba(255, 255, 255, 0.35);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -23,6 +48,7 @@
   --color-paper: var(--paper);
   --color-paper-deep: var(--paper-deep);
   --color-ink: var(--ink);
+  --color-night: var(--night);
   --color-muted-ink: var(--muted);
   --color-rule: var(--rule);
   --color-cobalt: var(--cobalt);
@@ -123,7 +149,7 @@
 /* Sonner toasts in the house style */
 [data-sonner-toast] {
   font-family: var(--font-sans) !important;
-  background: var(--ink) !important;
+  background: var(--night) !important;
   color: #fff !important;
   border: none !important;
   border-radius: 12px !important;
@@ -144,4 +170,34 @@
   margin: 0;
   padding: 0;
   cursor: pointer;
+}
+
+/* Skeleton shimmer across the generated site previews. Each preview sets its own
+   --shimmer-delay so a grid of them does not sweep in lockstep. */
+.sb-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 25%, var(--shimmer) 50%, transparent 75%);
+  transform: translateX(-100%);
+  animation: sb-shimmer 2.6s ease-in-out infinite;
+  animation-delay: var(--shimmer-delay, 0s);
+}
+
+@keyframes sb-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  55%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-shimmer::after {
+    animation: none;
+    display: none;
+  }
 }

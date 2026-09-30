@@ -8,6 +8,7 @@ import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { gsap, useGSAP, ScrollTrigger, prefersReducedMotion, FULL_MOTION } from "@/lib/motion/gsap";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
   Sheet,
   SheetClose,
@@ -97,7 +98,7 @@ export function SiteHeader() {
     >
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-night focus:px-3 focus:py-2 focus:text-sm focus:text-white"
       >
         Skip to content
       </a>
@@ -106,7 +107,7 @@ export function SiteHeader() {
         <Link href="/" className="flex items-center gap-2.5" aria-label="SiteBazaar home">
           <span
             aria-hidden="true"
-            className="grid size-9 place-items-center rounded-lg bg-ink font-display text-base font-extrabold text-marigold"
+            className="grid size-9 place-items-center rounded-lg bg-night font-display text-base font-extrabold text-marigold"
           >
             SB
           </span>
@@ -137,6 +138,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle className="md:size-9 md:[&_svg]:size-[18px]" />
           <Button asChild className="hidden rounded-full px-5 md:inline-flex">
             <Link href="/sell">List your site</Link>
           </Button>
@@ -151,13 +153,13 @@ function MobileNav({ pathname }: { pathname: string }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="h-11 gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white hover:bg-cobalt md:hidden">
+        <Button className="h-11 gap-2 rounded-full bg-night px-4 text-sm font-semibold text-white hover:bg-cobalt md:hidden">
           <Menu className="size-5" />
           Menu
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-80 border-l-0 bg-ink p-0 text-white">
+      <SheetContent side="right" className="w-80 border-l-0 bg-night p-0 text-white">
         <SheetHeader className="p-6">
           <SheetTitle className="display-tight text-3xl font-bold text-white">SiteBazaar</SheetTitle>
           <SheetDescription className="text-white/60">Websites, sold by the lot.</SheetDescription>

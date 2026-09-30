@@ -264,7 +264,7 @@ export default function SellPage() {
             <div className="relative border-b">
               <SitePreview id={form.title || "draft"} category={form.category || "SaaS"} />
               {form.isAuction ? (
-                <span className="absolute left-3 top-3 rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold">
+                <span className="absolute left-3 top-3 rounded-full bg-marigold px-2.5 py-1 text-xs font-semibold text-night">
                   Live auction
                 </span>
               ) : null}
@@ -303,7 +303,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       onClick={onClick}
       className={cn(
         "rounded-md border px-3.5 py-2 text-sm transition-colors",
-        active ? "border-ink bg-ink text-white" : "bg-card hover:border-ink/40"
+        active ? "border-ink bg-ink text-paper" : "bg-card hover:border-ink/40"
       )}
     >
       {children}
