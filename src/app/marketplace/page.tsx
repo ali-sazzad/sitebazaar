@@ -48,6 +48,10 @@ function Marketplace() {
   const [filters, setFilters] = useState<BrowseFilters>(DEFAULT_FILTERS);
   const grid = useRef<HTMLDivElement>(null);
   const flipState = useRef<Flip.FlipState | null>(null);
+  const prevHeight = useRef(0);
+  // Handles on the running animations, so a new filter click can settle them first.
+  const flipAnim = useRef<gsap.core.Timeline | null>(null);
+  const heightAnim = useRef<gsap.core.Tween | null>(null);
 
   // Restore saved filters; a ?category= link from the home page takes priority.
   useEffect(() => {
@@ -68,7 +72,11 @@ function Marketplace() {
   /** Every filter change goes through here so the grid can FLIP from its old layout. */
   const update = (patch: Partial<BrowseFilters>) => {
     if (grid.current && !prefersReducedMotion()) {
+      // Finish any animation still running, so this change measures a settled layout.
+      flipAnim.current?.progress(1).kill();
+      heightAnim.current?.progress(1).kill();
       flipState.current = Flip.getState(grid.current.querySelectorAll("[data-flip-id]"));
+      prevHeight.current = grid.current.offsetHeight;
     }
     setFilters((f) => ({ ...f, ...patch }));
   };
@@ -76,17 +84,31 @@ function Marketplace() {
   useGSAP(
     () => {
       const state = flipState.current;
-      if (!state) return;
+      const el = grid.current;
+      if (!state || !el) return;
       flipState.current = null;
-      Flip.from(state, {
-        targets: grid.current!.querySelectorAll("[data-flip-id]"),
+
+      // Cards stay in the grid's layout (no absolute positioning) and only their transforms
+      // animate, so the grid keeps its height and the footer never slides up underneath them.
+      flipAnim.current = Flip.from(state, {
+        targets: el.querySelectorAll("[data-flip-id]"),
         duration: 0.55,
         ease: "power3.inOut",
         stagger: 0.02,
-        absolute: true,
         onEnter: (els) =>
           gsap.fromTo(els, { autoAlpha: 0, scale: 0.92 }, { autoAlpha: 1, scale: 1, duration: 0.45, delay: 0.15 }),
       });
+
+      // Ease the grid from its old height to its new one so the page below glides instead of
+      // jumping. Clipping during the tween keeps cards from spilling over the footer.
+      const to = el.offsetHeight;
+      if (prevHeight.current && prevHeight.current !== to) {
+        heightAnim.current = gsap.fromTo(
+          el,
+          { height: prevHeight.current, overflow: "hidden" },
+          { height: to, duration: 0.55, ease: "power3.inOut", clearProps: "height,overflow" }
+        );
+      }
     },
     { dependencies: [result], scope: grid }
   );
