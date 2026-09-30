@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { CalendarDays, Clock } from "lucide-react";
 
 import type { ListingCategory } from "@/lib/mock/listings";
 import { addUserListing, type UserListingDraft } from "@/lib/listings/user-listings";
@@ -26,7 +27,8 @@ type FormState = {
   techStack: UserListingDraft["techStack"];
   price: string;
   isAuction: boolean;
-  endsAt: string; // YYYY-MM-DDTHH:mm, local time
+  endsDate: string; // YYYY-MM-DD, local
+  endsTime: string; // HH:mm, local
   shortPitch: string;
   tags: string; // comma separated
   screenshots: string; // comma separated URLs
@@ -38,11 +40,15 @@ const EMPTY: FormState = {
   techStack: ["Next.js", "React"],
   price: "199",
   isAuction: false,
-  endsAt: "",
+  endsDate: "",
+  endsTime: "",
   shortPitch: "",
   tags: "responsive, fast, SEO ready",
   screenshots: "",
 };
+
+/** Closing time as a datetime-local value, or "" until both parts are chosen. */
+const endsAtOf = (f: FormState) => (f.endsDate && f.endsTime ? `${f.endsDate}T${f.endsTime}` : "");
 
 const splitList = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
@@ -85,7 +91,7 @@ export default function SellPage() {
       techStack: form.techStack,
       price: Number(form.price),
       isAuction: form.isAuction,
-      endsAt: form.isAuction ? new Date(form.endsAt).toISOString() : undefined,
+      endsAt: form.isAuction ? new Date(endsAtOf(form)).toISOString() : undefined,
       shortPitch: form.shortPitch.trim(),
       tags: splitList(form.tags).slice(0, 8),
       screenshots: splitList(form.screenshots).slice(0, 6),
@@ -201,16 +207,43 @@ export default function SellPage() {
                 />
               </Field>
               <div ref={auctionPanel} className="overflow-hidden">
-                <Field id="ends" label="Auction closes" error={show("endsAt")} className="pt-5">
-                  <Input
-                    id="ends"
-                    type="datetime-local"
-                    value={form.endsAt}
-                    onChange={(e) => set({ endsAt: e.target.value })}
-                    className="h-11 bg-paper"
-                    tabIndex={form.isAuction ? 0 : -1}
-                  />
-                </Field>
+                <fieldset className="pt-5">
+                  <legend className="text-sm font-semibold">Auction closes</legend>
+                  {/* Phones: separate date and time pickers with visible icons */}
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
+                    <PickerInput
+                      icon={<CalendarDays />}
+                      label="Closing date"
+                      type="date"
+                      value={form.endsDate}
+                      onChange={(endsDate) => set({ endsDate })}
+                      disabled={!form.isAuction}
+                    />
+                    <PickerInput
+                      icon={<Clock />}
+                      label="Closing time"
+                      type="time"
+                      value={form.endsTime}
+                      onChange={(endsTime) => set({ endsTime })}
+                      disabled={!form.isAuction}
+                    />
+                  </div>
+                  {/* Larger screens: one combined picker */}
+                  <div className="mt-2 hidden sm:block">
+                    <PickerInput
+                      icon={<CalendarDays />}
+                      label="Closing date and time"
+                      type="datetime-local"
+                      value={endsAtOf(form)}
+                      onChange={(v) => {
+                        const [endsDate = "", endsTime = ""] = v.split("T");
+                        set({ endsDate, endsTime: endsTime.slice(0, 5) });
+                      }}
+                      disabled={!form.isAuction}
+                    />
+                  </div>
+                  <FieldError message={show("endsAt")} />
+                </fieldset>
               </div>
             </div>
           </div>
@@ -302,6 +335,41 @@ function Field({
   );
 }
 
+function PickerInput({
+  icon,
+  label,
+  type,
+  value,
+  onChange,
+  disabled,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  type: "date" | "time" | "datetime-local";
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        aria-label={label}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="sb-picker h-11 bg-paper pr-3"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-px right-px grid rounded-r-md bg-paper pl-2 pr-3 place-items-center text-muted-ink [&_svg]:size-4"
+      >
+        {icon}
+      </span>
+    </div>
+  );
+}
+
 function FieldError({ message }: { message?: string }) {
   return message ? <p className="mt-2 text-sm text-destructive">{message}</p> : null;
 }
@@ -323,8 +391,11 @@ function validate(f: FormState) {
   if (bad) e.screenshots = "Screenshot links must start with http:// or https://.";
 
   if (f.isAuction) {
-    const end = Date.parse(f.endsAt);
-    if (!f.endsAt || !Number.isFinite(end)) e.endsAt = "Choose when the auction closes.";
+    const endsAt = endsAtOf(f);
+    const end = Date.parse(endsAt);
+    if (!f.endsDate) e.endsAt = "Choose the day the auction closes.";
+    else if (!f.endsTime) e.endsAt = "Choose the time the auction closes.";
+    else if (!endsAt || !Number.isFinite(end)) e.endsAt = "Choose when the auction closes.";
     else if (end < Date.now() + 10 * 60_000) e.endsAt = "Set a closing time at least 10 minutes from now.";
   }
 

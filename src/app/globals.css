@@ -136,10 +136,13 @@
   color: #fff !important;
 }
 
-/* Keep native date/time picker icons visible */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  opacity: 1;
+/* Date/time pickers draw their own icon (see PickerInput). The native indicator stays
+   clickable but transparent, sitting underneath that icon so there is only ever one. */
+.sb-picker::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
   cursor: pointer;
 }
