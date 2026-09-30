@@ -4,6 +4,8 @@ A marketplace for buying and selling websites, designed like an auction house. B
 live auctions, or buy a finished site outright. Frontend only: listings, bids, purchases and your
 watchlist are stored in the browser's localStorage and no payment is taken.
 
+**Live demo: https://ali-sazzad.github.io/sitebazaar/**
+
 ## Tech stack
 
 - Next.js 16 (App Router, React Compiler) with React 19 and TypeScript
@@ -51,6 +53,17 @@ npm run dev
 ```
 
 Then open http://localhost:3000.
+
+## Deployment
+
+Every push to `main` builds a static export and publishes it to GitHub Pages through
+`.github/workflows/deploy-pages.yml`. The export only switches on when `PAGES_BASE_PATH` is set,
+so local development and other hosts such as Vercel build the app normally. To reproduce the Pages
+build locally:
+
+```bash
+PAGES_BASE_PATH=/sitebazaar npm run build   # writes the static site to ./out
+```
 
 ## Project structure
 

@@ -21,7 +21,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sitebazaar.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://sitebazaar.vercel.app"),
   title: {
     default: "SiteBazaar: buy and sell websites",
     template: "%s | SiteBazaar",
