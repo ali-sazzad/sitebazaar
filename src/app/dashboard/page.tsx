@@ -1,394 +1,223 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { ListingCard } from "@/components/listing/listing-card";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getFavorites } from "@/lib/favorites/favorites";
 import { getRecents, type RecentItem } from "@/lib/recent/recent";
 import { listingFromId, listingsFromIds } from "@/lib/mock/map-listings";
-
 import { getUserListings, type UserListingDraft } from "@/lib/listings/user-listings";
 import { getBidStore, type Bid } from "@/lib/bids/bids";
+import { getPurchases, type Purchase } from "@/lib/purchases/purchases";
+import { isDefined } from "@/lib/utils/is-defined";
+import { money, shortTitle } from "@/lib/format";
+import { gsap, useGSAP, prefersReducedMotion } from "@/lib/motion/gsap";
+import { cn } from "@/lib/utils";
 
-function money(n: number) {
-  return new Intl.NumberFormat("en-US").format(n);
-}
+import { ListingCard } from "@/components/listing/listing-card";
+import { SitePreview } from "@/components/listing/site-preview";
+import { Button } from "@/components/ui/button";
+
+type TabKey = "bids" | "watchlist" | "purchases" | "listings" | "recent";
+
+type Data = {
+  favIds: string[];
+  recents: RecentItem[];
+  myListings: UserListingDraft[];
+  myBids: Bid[];
+  purchases: Purchase[];
+};
+
+const dateFmt: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
 
 export default function DashboardPage() {
-  const [favIds, setFavIds] = useState<string[]>([]);
-  const [recents, setRecents] = useState<RecentItem[]>([]);
-
-  const [myListings, setMyListings] = useState<UserListingDraft[]>([]);
-  const [myBids, setMyBids] = useState<Bid[]>([]);
+  const [data, setData] = useState<Data | null>(null);
+  const [tab, setTab] = useState<TabKey>("bids");
+  const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setFavIds(getFavorites());
-    setRecents(getRecents());
-    setMyListings(getUserListings());
-
-    // Flatten store into array and keep only "You" bids
-    const store = getBidStore();
-    const all = Object.values(store).flat();
-    setMyBids(all.filter((b) => b.bidder === "You"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read localStorage after mount
+    setData({
+      favIds: getFavorites(),
+      recents: getRecents(),
+      myListings: getUserListings(),
+      myBids: Object.values(getBidStore()).flat().filter((b) => b.bidder === "You"),
+      purchases: getPurchases(),
+    });
   }, []);
 
-  const favoriteListings = useMemo(() => listingsFromIds(favIds), [favIds]);
+  const watchlist = useMemo(() => listingsFromIds(data?.favIds ?? []), [data]);
+  const recent = useMemo(() => (data?.recents ?? []).map((r) => listingFromId(r.id)).filter(isDefined), [data]);
 
-  // ✅ IMPORTANT: this filters out null AND narrows type to Listing[]
-  const recentListings = useMemo(() => {
-    return recents
-      .map((r) => listingFromId(r.id))
-      .filter((l): l is NonNullable<typeof l> => l !== null);
-  }, [recents]);
-
-  // Group my bids by listingId (newest first)
-  const bidsByListing = useMemo(() => {
-    const map = new Map<string, Bid[]>();
-    const sorted = [...myBids].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    for (const b of sorted) {
-      const arr = map.get(b.listingId) ?? [];
-      arr.push(b);
-      map.set(b.listingId, arr);
+  // Latest bid per auction, newest first.
+  const bidRows = useMemo(() => {
+    const latest = new Map<string, { bid: Bid; count: number }>();
+    for (const b of [...(data?.myBids ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))) {
+      const row = latest.get(b.listingId);
+      if (row) row.count++;
+      else latest.set(b.listingId, { bid: b, count: 1 });
     }
+    return [...latest.values()];
+  }, [data]);
 
-    return map;
-  }, [myBids]);
+  // Switching tabs: fade the new panel's items up in sequence.
+  useGSAP(
+    () => {
+      if (!panel.current || prefersReducedMotion()) return;
+      gsap.from(panel.current.querySelectorAll("[data-item]"), { autoAlpha: 0, y: 14, stagger: 0.04, duration: 0.4 });
+    },
+    { dependencies: [tab, data], scope: panel }
+  );
+
+  const tabs: { key: TabKey; label: string; count: number }[] = [
+    { key: "bids", label: "Your bids", count: bidRows.length },
+    { key: "watchlist", label: "Watchlist", count: watchlist.length },
+    { key: "purchases", label: "Purchases", count: data?.purchases.length ?? 0 },
+    { key: "listings", label: "Your listings", count: data?.myListings.length ?? 0 },
+    { key: "recent", label: "Recently viewed", count: recent.length },
+  ];
 
   return (
-    <div className="sb-container py-10">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="sb-container py-12">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-slate-600">
-            Frontend-only. Everything is stored in localStorage.
-          </p>
+          <h1 className="display-tight text-6xl font-bold sm:text-7xl">Dashboard</h1>
+          <p className="mt-3 text-muted-ink">Everything here is saved in this browser.</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            style={{
-              background: "hsla(var(--sb-grad-a) / .12)",
-              color: "hsl(var(--sb-text))",
-            }}
-          >
-            {favoriteListings.length} favorites
-          </Badge>
-
-          <Badge
-            style={{
-              background: "hsla(var(--sb-grad-b) / .12)",
-              color: "hsl(var(--sb-text))",
-            }}
-          >
-            {recentListings.length} recent
-          </Badge>
-
-          <Badge
-            style={{
-              background: "hsla(var(--sb-warm) / .14)",
-              color: "hsl(var(--sb-text))",
-            }}
-          >
-            {myListings.length} my listings
-          </Badge>
-
-          <Badge
-            style={{
-              background: "hsla(var(--sb-warm) / .10)",
-              color: "hsl(var(--sb-text))",
-            }}
-          >
-            {myBids.length} my bids
-          </Badge>
-        </div>
+        <Button asChild className="h-11 rounded-full px-6">
+          <Link href="/sell">List a site</Link>
+        </Button>
       </div>
 
-      <Separator className="my-6" />
-
-      {/* My Listings */}
-      <section>
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-900">My listings</h2>
-
-          <Button
-            asChild
-            className="rounded-full text-white"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-            }}
+      <div role="tablist" aria-label="Dashboard sections" className="mt-10 flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            id={`tab-${t.key}`}
+            aria-selected={tab === t.key}
+            aria-controls="dash-panel"
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+              tab === t.key ? "border-cobalt text-ink" : "border-transparent text-muted-ink hover:text-ink"
+            )}
           >
-            <Link href="/sell">Create listing</Link>
-          </Button>
-        </div>
+            {t.label}
+            <span className={cn("tabular rounded-full px-2 py-0.5 text-xs", tab === t.key ? "bg-cobalt text-white" : "bg-paper-deep")}>
+              {data ? t.count : "–"}
+            </span>
+          </button>
+        ))}
+      </div>
 
-        {myListings.length === 0 ? (
-          <EmptyBlock
-            title="No listings yet"
-            desc="Create your first listing draft from the Sell page."
-            primaryHref="/sell"
-            primaryLabel="Go to Sell page"
-          />
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {myListings.map((l) => (
-              <Card key={l.id} className="sb-card p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-500">{l.category}</p>
-                    <p className="mt-1 font-semibold text-slate-900 line-clamp-2">
-                      {l.title}
-                    </p>
-                  </div>
-
-                  <span
-                    className="rounded-full px-2.5 py-1 text-xs font-semibold text-white whitespace-nowrap"
-                    style={{
-                      background: l.isAuction
-                        ? "linear-gradient(135deg, hsl(var(--sb-warm)), hsl(var(--sb-grad-a)))"
-                        : "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-                    }}
-                  >
-                    {l.isAuction ? "Auction" : "Buy Now"}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {l.techStack.slice(0, 3).map((t) => (
-                    <span key={t} className="sb-chip">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 flex items-end justify-between">
+      <div ref={panel} id="dash-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="pt-8">
+        {!data ? null : tab === "bids" ? (
+          bidRows.length === 0 ? (
+            <Empty title="You haven't bid on anything yet" body="Auctions close fast. Find one worth bidding on." href="/marketplace" cta="Browse live auctions" />
+          ) : (
+            <ul className="divide-y border-y">
+              {bidRows.map(({ bid, count }) => {
+                const l = listingFromId(bid.listingId);
+                return (
+                  <li key={bid.listingId} data-item>
+                    <Link href={`/auctions/${bid.listingId}`} className="group grid grid-cols-[5rem_1fr_auto] items-center gap-4 py-4 sm:grid-cols-[7rem_1fr_auto_auto] sm:gap-6">
+                      <div className="overflow-hidden rounded-md border">
+                        {l ? <SitePreview id={l.id} category={l.category} /> : null}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-xl font-semibold group-hover:text-cobalt">
+                          {l ? shortTitle(l.title) : bid.listingId}
+                        </p>
+                        <p className="text-sm text-muted-ink">
+                          {count} {count === 1 ? "bid" : "bids"}, last on{" "}
+                          {new Date(bid.createdAt).toLocaleString("en-US", dateFmt)}
+                        </p>
+                      </div>
+                      <p className="text-sm text-muted-ink max-sm:hidden">Your top bid</p>
+                      <p className="tabular font-display text-2xl font-semibold">${money(bid.amount)}</p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )
+        ) : tab === "watchlist" ? (
+          watchlist.length === 0 ? (
+            <Empty title="Your watchlist is empty" body="Add lots to your watchlist to compare them here." href="/marketplace" cta="Browse lots" />
+          ) : (
+            <CardGrid>{watchlist.map((l) => <div key={l.id} data-item className="flex"><ListingCard listing={l} className="w-full" /></div>)}</CardGrid>
+          )
+        ) : tab === "purchases" ? (
+          data.purchases.length === 0 ? (
+            <Empty title="No purchases yet" body="Sites you buy outright will show up here with their handover status." href="/marketplace" cta="Find a site to buy" />
+          ) : (
+            <ul className="divide-y border-y">
+              {data.purchases.map((p) => (
+                <li key={p.id} data-item className="flex flex-wrap items-center justify-between gap-3 py-4">
                   <div>
-                    <p className="text-xs text-slate-500">Price</p>
-                    <p className="text-lg font-semibold text-slate-900">
-                      ${money(l.price)}
+                    <Link href={`/listing/${p.listingId}`} className="font-semibold hover:text-cobalt">
+                      {p.title}
+                    </Link>
+                    <p className="text-sm text-muted-ink">
+                      Bought {new Date(p.createdAt).toLocaleString("en-US", dateFmt)}. Handover in progress.
                     </p>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    {new Date(l.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-
-                {l.isAuction && l.endsAt ? (
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold text-slate-700">Ends</p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      {new Date(l.endsAt).toLocaleString()}
-                    </p>
+                  <p className="tabular font-display text-2xl font-semibold">${money(p.price)}</p>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : tab === "listings" ? (
+          data.myListings.length === 0 ? (
+            <Empty title="You haven't listed a site yet" body="It takes a few minutes. Set a price or open an auction." href="/sell" cta="List a site" />
+          ) : (
+            <CardGrid>
+              {data.myListings.map((l) => (
+                <div key={l.id} data-item className="overflow-hidden rounded-xl border bg-card">
+                  <div className="border-b">
+                    <SitePreview id={l.title} category={l.category} />
                   </div>
-                ) : null}
-
-                <div className="mt-4 flex gap-2">
-                  <Button asChild variant="outline" className="rounded-xl w-full">
-                    <Link href="/marketplace">View marketplace</Link>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <Separator className="my-10" />
-
-      {/* Favorites */}
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Favorites</h2>
-          <Link
-            className="text-sm text-slate-600 hover:text-slate-900"
-            href="/marketplace"
-          >
-            Browse more →
-          </Link>
-        </div>
-
-        {favoriteListings.length === 0 ? (
-          <EmptyBlock
-            title="No favorites yet"
-            desc="Save listings to compare later. Favorites persist in localStorage."
-            primaryHref="/marketplace"
-            primaryLabel="Go to Marketplace"
-          />
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {favoriteListings.map((l) => (
-              <ListingCard key={l.id} listing={l} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <Separator className="my-10" />
-
-      {/* Recently viewed */}
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Recently viewed</h2>
-          <Link
-            className="text-sm text-slate-600 hover:text-slate-900"
-            href="/marketplace"
-          >
-            Explore →
-          </Link>
-        </div>
-
-        {recentListings.length === 0 ? (
-          <EmptyBlock
-            title="Nothing viewed yet"
-            desc="Open a listing and it will show up here automatically."
-            primaryHref="/marketplace"
-            primaryLabel="Browse listings"
-          />
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recentListings.map((l) => (
-              <ListingCard key={l.id} listing={l} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <Separator className="my-10" />
-
-      {/* My Bids */}
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">My bids</h2>
-          <Link
-            className="text-sm text-slate-600 hover:text-slate-900"
-            href="/marketplace"
-          >
-            Find auctions →
-          </Link>
-        </div>
-
-        {myBids.length === 0 ? (
-          <EmptyBlock
-            title="No bids yet"
-            desc="Place a bid on any auction listing and it will appear here."
-            primaryHref="/marketplace"
-            primaryLabel="Browse auctions"
-          />
-        ) : (
-          <div className="mt-4 grid gap-4">
-            {[...bidsByListing.entries()].map(([listingId, bids]) => {
-              const listing = listingFromId(listingId);
-
-              return (
-                <Card key={listingId} className="sb-card p-5">
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm text-slate-500">Listing</p>
-                      <p className="font-semibold text-slate-900 line-clamp-2">
-                        {listing?.title ?? `Listing ${listingId}`}
+                  <div className="p-4">
+                    <p className="text-xs text-muted-ink">
+                      {l.category}, {l.isAuction ? "auction" : "fixed price"}
+                    </p>
+                    <p className="mt-1 font-semibold leading-snug">{l.title}</p>
+                    <div className="mt-4 flex items-end justify-between gap-3">
+                      <p className="tabular font-display text-2xl font-semibold">${money(l.price)}</p>
+                      <p className="text-right text-xs text-muted-ink">
+                        {l.isAuction && l.endsAt
+                          ? `Closes ${new Date(l.endsAt).toLocaleString("en-US", dateFmt)}`
+                          : `Listed ${new Date(l.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
                       </p>
                     </div>
-
-                    <div className="mt-2 sm:mt-0 flex items-center gap-2">
-                      <Badge
-                        style={{
-                          background: "hsla(var(--sb-grad-a) / .12)",
-                          color: "hsl(var(--sb-text))",
-                        }}
-                      >
-                        {bids.length} bids
-                      </Badge>
-
-                      {listing ? (
-                        <Button asChild variant="outline" className="rounded-full">
-                          <Link href={`/auctions/${listingId}`}>Open auction</Link>
-                        </Button>
-                      ) : null}
-                    </div>
                   </div>
-
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Amount</TableHead>
-                          <TableHead className="text-right">Time</TableHead>
-                        </TableRow>
-                      </TableHeader>
-
-                      <TableBody>
-                        {bids.slice(0, 5).map((b) => (
-                          <TableRow key={b.id}>
-                            <TableCell className="font-semibold text-slate-900">
-                              ${money(b.amount)}
-                            </TableCell>
-                            <TableCell className="text-right text-slate-600 text-sm">
-                              {new Date(b.createdAt).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                </div>
+              ))}
+            </CardGrid>
+          )
+        ) : recent.length === 0 ? (
+          <Empty title="Nothing viewed yet" body="Lots you open will be listed here so you can find them again." href="/marketplace" cta="Browse lots" />
+        ) : (
+          <CardGrid>{recent.map((l) => <div key={l.id} data-item className="flex"><ListingCard listing={l} className="w-full" /></div>)}</CardGrid>
         )}
-      </section>
+      </div>
     </div>
   );
 }
 
-function EmptyBlock({
-  title,
-  desc,
-  primaryHref,
-  primaryLabel,
-}: {
-  title: string;
-  desc: string;
-  primaryHref: string;
-  primaryLabel: string;
-}) {
-  return (
-    <Card className="sb-card mt-4 p-6">
-      <p className="text-base font-semibold text-slate-900">{title}</p>
-      <p className="mt-1 text-sm text-slate-600">{desc}</p>
+function CardGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+}
 
-      <div className="mt-4">
-        <Button
-          asChild
-          className="rounded-full text-white"
-          style={{
-            background:
-              "linear-gradient(135deg, hsl(var(--sb-grad-a)), hsl(var(--sb-grad-b)))",
-          }}
-        >
-          <Link href={primaryHref}>{primaryLabel}</Link>
-        </Button>
-      </div>
-    </Card>
+function Empty({ title, body, href, cta }: { title: string; body: string; href: string; cta: string }) {
+  return (
+    <div data-item className="rounded-2xl border border-dashed p-10">
+      <h2 className="text-2xl font-semibold">{title}</h2>
+      <p className="mt-2 max-w-md text-muted-ink">{body}</p>
+      <Button asChild className="mt-6 rounded-full">
+        <Link href={href}>{cta}</Link>
+      </Button>
+    </div>
   );
 }
